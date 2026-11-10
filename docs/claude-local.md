@@ -42,10 +42,24 @@ Options:
 |---|---|
 | Pick a model | `CLAUDE_MODEL=claude-sonnet-5-5 ./claude-local.sh` (leave unset for the CLI default) |
 | Only set up and check, don't start | `./claude-local.sh --setup-only` |
+| Use an offline voice (no cloud TTS) | `./claude-local.sh --local-voice`, then pick a `kokoro:` voice such as `kokoro:af_heart` |
 | Re-check the Claude login | `uv run python scripts/claude_local_setup.py` |
 
 On later runs, `./claude-local.sh` alone is enough. Settings you change in the
 WebUI are kept in `config.toml`, which git ignores.
+
+## Offline voice (Kokoro)
+
+`--local-voice` starts `scripts/kokoro_local_server.py`, a small local server
+for the Kokoro-82M voice model (Apache-2.0). It runs on CPU and needs no
+Docker. It serves the OpenAI-style API that the built-in Kokoro provider
+already calls at `http://127.0.0.1:8880/v1`. The first run downloads the model
+(about 350 MB) into `storage/kokoro/`, and after that it works offline. A
+48-second voiceover takes a few seconds to generate.
+
+Kokoro voices don't return word timings. To get tighter subtitle sync, set
+`subtitle_provider = "whisper"` in `config.toml`. Whisper is also local, and
+it downloads its model on first use.
 
 ## Docker instead
 
