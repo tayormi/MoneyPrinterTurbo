@@ -18,7 +18,7 @@ English | [简体中文](README.md) | [日本語](README-ja.md) | [Releases](htt
 
 </div>
 
-> **This fork runs on a Claude subscription.** Run `./claude-local.sh` to set up and start everything locally. See [docs/claude-local.md](docs/claude-local.md).
+> **This fork runs on a Claude subscription.** Run `./claude-local.sh` to set up and start everything locally. See [docs/claude-local.md](docs/claude-local.md). For episodic series with recurring characters, see [docs/series.md](docs/series.md).
 
 ## Screenshots 🖥️
 

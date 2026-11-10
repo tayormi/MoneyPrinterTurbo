@@ -1,0 +1,80 @@
+# Series bible: everything the episode planner and scene artist must stay consistent with.
+# Edit freely: names, looks, voices and the season arc are all read fresh for every episode.
+
+title: "Coral Key"
+logline: >
+  A charter yacht sinks in a storm. Leo, the quiet boat mechanic nobody noticed,
+  washes up on a tiny island with four passengers who treat him like the help.
+  Every episode they push him out, mock him or sabotage him, and every episode he
+  outsmarts the island and them, until the day he gets everyone rescued.
+format:
+  platform: TikTok (9:16 vertical)
+  episode_length_seconds: [70, 90]      # Creator Rewards only counts videos over 1 minute
+  scenes_per_episode: [7, 9]
+  structure:
+    - "Scene 1 is a cold-open hook: a 1-2 line problem or insult, no recap."
+    - "Middle scenes: the women's latest scheme or slight, then Leo's clever fix."
+    - "Last scene: a small win for Leo, then a cliffhanger line that sets up the next episode."
+  narration: "Leo narrates in first person, dry and understated. Other characters speak their own lines."
+  spoken_words_per_episode: [170, 230]
+
+tone: >
+  Survival comedy-drama. Petty camp politics, slapstick mishaps, satisfying comebacks.
+  Leo wins through skill, patience and wit, never through cruelty.
+
+guardrails:
+  - "The women are full characters with their own motives, fears and growth arcs, never one-note stereotypes."
+  - "No romance, sexual content, nudity or innuendo. Nobody is in swimwear close-ups."
+  - "Conflict stays at pettiness, pranks, exclusion and arguments. No assault, no lasting injuries, no gore."
+  - "Leo's wins come from competence. He never humiliates anyone back; he out-builds and out-thinks them."
+  - "By the end of the season each woman has earned at least one moment of respect or redemption."
+
+art_style: >
+  Flat modern vector illustration, bold clean shapes, soft gradients avoided,
+  warm tropical palette (teal sea #1FA4A8, sand #F2D49B, jungle #2E7D4F, sunset #F28C38,
+  night #1B2A4A). Characters drawn in a consistent cartoon style: oval heads,
+  simple dot eyes with small white highlights, expressive eyebrows, no text anywhere.
+  Full-bleed 1080x1920 portrait canvas, characters large in frame, readable at phone size.
+
+characters:
+  leo:
+    name: Leo
+    role: "Protagonist and narrator. Former boat mechanic on the yacht, 30, calm, inventive, dry humor."
+    look: "Medium-brown skin (#8D5A3B), short black curly hair, light stubble, rolled-sleeve faded blue work shirt (#3D6FA8), khaki shorts (#B59B6A), barefoot, carries a small orange multitool (#F28C38)."
+    voice: "kokoro:am_michael"
+  vanessa:
+    name: Vanessa
+    role: "Self-appointed leader, startup CEO, 35. Gives orders, takes credit, terrified of losing control. Arc: learns to listen."
+    look: "Light skin (#F1C9A5), sleek platinum-blonde bob, large white sunglasses pushed up on her head, tailored white blazer over a coral top (#F2665E), gold hoop earrings."
+    voice: "kokoro:af_bella"
+  jade:
+    name: Jade
+    role: "Fitness coach, 28, competitive and mocking, hates being outdone. Arc: becomes Leo's grudging teammate."
+    look: "Dark brown skin (#5C3A21), high box-braid ponytail with purple accents (#7B4FB0), neon-green sports top (#7BD94C), black leggings, sweatband on her wrist."
+    voice: "kokoro:af_nicole"
+  priya:
+    name: Priya
+    role: "Corporate lawyer, 33, writes camp 'rules' on bark that always favor the group over Leo. Arc: rewrites the rules to be fair."
+    look: "Tan skin (#C68E5E), long straight black hair in a low ponytail, thin round glasses, navy button-up shirt (#22355E) with sleeves rolled, small notebook."
+    voice: "kokoro:bf_emma"
+  mia:
+    name: Mia
+    role: "Youngest, 22, art student, follows the group to fit in but secretly helps Leo. Arc: stands up to the others."
+    look: "Light-olive skin (#E0B48C), messy auburn bun (#A0442A) with a yellow scrunchie, oversized mustard-yellow hoodie (#E8B73A), denim shorts, paint smudge on one cheek."
+    voice: "kokoro:af_sky"
+
+setting:
+  island: "Coral Key: a small crescent island with a white beach, palm grove, a rocky hill with a cave, a freshwater stream inland, and the half-sunk yacht wreck on the reef."
+  camp: "The women's camp is on the beach under a tarp from the wreck. Leo is pushed to the windy rocky point at the far end."
+
+season_arc:
+  - "Ep 1: Washed ashore. The women claim the only tarp and send Leo to the rocky point. He builds a better shelter from wreck parts."
+  - "Ep 2: Priya's camp rules say food is shared but work isn't. Leo invents a fish trap; Jade tries to prove she can fish faster."
+  - "Ep 3: The water runs out. Vanessa rations it to everyone but Leo. Leo finds the inland stream and builds a filter."
+  - "Ep 4: Storm night. The tarp camp floods; they have to ask Leo for shelter. He lets them in without a word."
+  - "Ep 5: Jade sabotages his fishing line to win a bet, then gets caught by the tide. Leo pulls her out."
+  - "Ep 6: Mia is caught helping Leo and is kicked out of camp. She joins him and they start a signal project."
+  - "Ep 7: Vanessa sprains her ankle on the hill. Leo carries her back and splints it. She can't say thank you yet."
+  - "Ep 8: Priya rewrites the rules: 'Leo is in charge of anything that floats.' They salvage the yacht radio."
+  - "Ep 9: The radio needs power. The whole group, for the first time, works under Leo's plan to build a hand generator."
+  - "Ep 10: A ship's lights on the horizon. The signal works. Rescue, and Vanessa finally says thank you."
