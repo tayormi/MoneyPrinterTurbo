@@ -86,9 +86,15 @@ def make_portrait(character: dict, out: Path, model: str = DEFAULT_IMAGE_MODEL) 
     raise RealisticError(f"no image returned for {character['name']}")
 
 
-def clip_seconds(scene: dict) -> int:
+def clip_seconds(scene: dict, bounds=(5, 15)) -> int:
+    """Clip length from the spoken words, kept inside the bible's shot_seconds (Omni: 3-15 s)."""
+    low, high = max(3, int(bounds[0])), min(15, int(bounds[-1]))
     words = sum(len(line["text"].split()) for line in scene.get("lines", []))
-    return int(min(15, max(5, round(words / WORDS_PER_SECOND + 2))))
+    needed = round(words / WORDS_PER_SECOND + 1.5)
+    if needed > high:  # never cut dialogue short: stretch past the pacing target (max 15 s)
+        logger.warning(f"shot {scene.get('id')} needs {needed}s for its lines; pacing target is {high}s")
+        return int(min(15, needed))
+    return int(max(low, needed))
 
 
 def scene_prompt(bible: dict, scene: dict, ref_ids: list[str], seconds: int) -> str:
@@ -129,7 +135,7 @@ def make_clip(bible: dict, scene: dict, portraits: dict, out: Path,
     in_frame = scene.get("characters", [])
     order = list(dict.fromkeys(([lead] if lead in in_frame else []) + speakers + in_frame))
     ref_ids = [cid for cid in order if cid in portraits][:MAX_REF_CHARACTERS]
-    seconds = clip_seconds(scene)
+    seconds = clip_seconds(scene, (bible.get("format") or {}).get("shot_seconds", (5, 15)))
     items = [{"type": "text", "text": scene_prompt(bible, scene, ref_ids, seconds)}]
     for cid in ref_ids:
         items.append({"type": "image", "mime_type": "image/png",
@@ -178,3 +184,49 @@ def normalise_clip(ffmpeg: str, src: Path, out: Path, width: int, height: int, f
          "-c:a", "aac", "-ar", "44100", "-ac", "2", "-b:a", "192k", str(out)],
         check=True,
     )
+
+
+def still_prompt(bible: dict, scene: dict, ref_ids: list[str]) -> str:
+    chars = bible.get("characters", {})
+    setting = bible.get("setting", {})
+    who = [f"{chars[cid]['name']} is the person in reference image {i + 1}: keep their face, hair, "
+           f"body and outfit exactly." for i, cid in enumerate(ref_ids)]
+    for cid in scene.get("characters", []):
+        if cid not in ref_ids:
+            who.append(f"{chars[cid]['name']}: {chars[cid].get('look', '')}")
+    speaking = ", ".join(dict.fromkeys(chars[l["speaker"]]["name"] for l in scene.get("lines", [])))
+    return "\n".join([
+        "Photorealistic cinematic film still from a live-action TV drama, vertical 9:16 frame.",
+        "Natural light, shallow depth of field, real skin texture, candid mid-action moment.",
+        "No text, captions, logos or watermarks. Keep the lower third free of faces (subtitles go there).",
+        f"Setting: {setting.get('island', '')} {setting.get('camp', '')}".strip(),
+        "Characters (fictional adults):",
+        *who,
+        f"Shot: {scene['shot']}",
+        f"{speaking} is speaking in this moment; show it in their expression." if speaking else "",
+    ])
+
+
+def make_still(bible: dict, scene: dict, portraits: dict, out: Path,
+               model: str = DEFAULT_IMAGE_MODEL, max_refs: int = 4) -> Path:
+    """One photoreal frame for a shot, with the cast portraits as identity references."""
+    lead = bible.get("protagonist")
+    speakers = [line["speaker"] for line in scene.get("lines", [])]
+    in_frame = scene.get("characters", [])
+    order = list(dict.fromkeys(([lead] if lead in in_frame else []) + speakers + in_frame))
+    ref_ids = [cid for cid in order if cid in portraits and cid in in_frame][:max_refs]
+    parts = [{"text": still_prompt(bible, scene, ref_ids)}]
+    for cid in ref_ids:
+        parts.append({"inlineData": {"mimeType": "image/png",
+                                     "data": base64.b64encode(Path(portraits[cid]).read_bytes()).decode()}})
+    data = _post(
+        f"models/{model}:generateContent",
+        {"contents": [{"parts": parts}],
+         "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": "9:16"}}},
+        timeout=180,
+    )
+    for part in data.get("candidates", [{}])[0].get("content", {}).get("parts", []):
+        if "inlineData" in part:
+            out.write_bytes(base64.b64decode(part["inlineData"]["data"]))
+            return out
+    raise RealisticError(f"no image returned for shot {scene.get('id')}")

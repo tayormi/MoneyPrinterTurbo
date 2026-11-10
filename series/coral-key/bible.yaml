@@ -3,20 +3,36 @@
 
 title: "Coral Key"
 logline: >
-  A charter yacht sinks in a storm. Leo, the quiet boat mechanic nobody noticed,
-  washes up on a tiny island with four passengers who treat him like the help.
-  Every episode they push him out, mock him or sabotage him, and every episode he
-  outsmarts the island and them, until the day he gets everyone rescued.
+  A charter yacht sinks in a storm. Leo, the quiet boat mechanic, washes up on a tiny
+  island with four passengers who blame him for the sinking and treat him like the help.
+  Every part they push him out, mock him or sabotage him, and every part he outsmarts
+  the island and them, while clues reveal what really sank the yacht, until the day he
+  gets everyone rescued.
 format:
   platform: TikTok (9:16 vertical)
-  episode_length_seconds: [70, 90]      # Creator Rewards only counts videos over 1 minute
-  scenes_per_episode: [7, 9]
+  parts: 10
+  episode_length_seconds: [62, 75]      # just over 1 minute: counts for Creator Rewards, still fast
+  shots_per_episode: [12, 16]           # each shot is one clip/still; many short shots = fast pace
+  shot_seconds: [3, 6]
+  max_lines_per_shot: 2
+  max_words_per_line: 12
+  spoken_words_per_episode: [140, 185]
   structure:
-    - "Scene 1 is a cold-open hook: a 1-2 line problem or insult, no recap."
-    - "Middle scenes: the women's latest scheme or slight, then Leo's clever fix."
-    - "Last scene: a small win for Leo, then a cliffhanger line that sets up the next episode."
-  narration: "Leo narrates in first person, dry and understated. Other characters speak their own lines."
-  spoken_words_per_episode: [170, 230]
+    - "Shot 1 (0-2 s) is the HOOK: open mid-action on the most dramatic or funniest moment of this part, with one sharp line. Never start with scenery, a recap or narration."
+    - "If there is a previous part, shots 1-2 must pay off its cliffhanger immediately."
+    - "Every 3-4 shots something changes: a new obstacle, a reveal, a reversal or a joke landing."
+    - "Around 70% through: Leo's clever fix or comeback, shown, not explained."
+    - "Last shot is the CLIFFHANGER: a new threat, a reveal or a question, cut on the line. No wrap-up."
+    - "Each part also drops or advances one clue in the season mystery."
+  narration: "Leo's narration is rare and dry, one short line at most per shot. Prefer on-screen dialogue and reactions."
+  dialogue: "Short, punchy, quotable lines. No exposition dumps. Characters interrupt each other."
+
+title_card: "CORAL KEY · PART {n}/{total}"   # shown for the first 1.8 s of every part
+captions:
+  font: BeVietnamPro-Bold.ttf
+  font_size: 74
+  stroke_width: 4
+  position_percent: 70                  # from the top; clear of faces, above the TikTok UI
 
 render:
   # drawn: Claude-drawn illustrated stills + local Kokoro voices (free).
@@ -83,14 +99,21 @@ setting:
   island: "Coral Key: a small crescent island with a white beach, palm grove, a rocky hill with a cave, a freshwater stream inland, and the half-sunk yacht wreck on the reef."
   camp: "The women's camp is on the beach under a tarp from the wreck. Leo is pushed to the windy rocky point at the far end."
 
+season_mystery: >
+  Why did the yacht sink? Vanessa tells everyone the mechanic (Leo) ignored a leak, which
+  is why the group treats him like a liability. Clues: a silenced bilge-pump alarm, Vanessa's
+  smartwatch log, a pulled fuse in Leo's toolkit that isn't his. Truth (revealed in Part 8):
+  Vanessa switched off the "annoying" beeping alarm herself the night of the storm. Her guilt
+  is why she needed someone to blame. She confesses and apologises in Part 10.
+
 season_arc:
-  - "Ep 1: Washed ashore. The women claim the only tarp and send Leo to the rocky point. He builds a better shelter from wreck parts."
-  - "Ep 2: Priya's camp rules say food is shared but work isn't. Leo invents a fish trap; Jade tries to prove she can fish faster."
-  - "Ep 3: The water runs out. Vanessa rations it to everyone but Leo. Leo finds the inland stream and builds a filter."
-  - "Ep 4: Storm night. The tarp camp floods; they have to ask Leo for shelter. He lets them in without a word."
-  - "Ep 5: Jade sabotages his fishing line to win a bet, then gets caught by the tide. Leo pulls her out."
-  - "Ep 6: Mia is caught helping Leo and is kicked out of camp. She joins him and they start a signal project."
-  - "Ep 7: Vanessa sprains her ankle on the hill. Leo carries her back and splints it. She can't say thank you yet."
-  - "Ep 8: Priya rewrites the rules: 'Leo is in charge of anything that floats.' They salvage the yacht radio."
-  - "Ep 9: The radio needs power. The whole group, for the first time, works under Leo's plan to build a hand generator."
-  - "Ep 10: A ship's lights on the horizon. The signal works. Rescue, and Vanessa finally says thank you."
+  - "Part 1 - Washed ashore: Vanessa blames Leo for the sinking and claims the only tarp. Leo builds a better shelter from the wreck. Cliffhanger: Leo finds the bilge-pump alarm was switched off by hand."
+  - "Part 2 - Camp rules: Priya's bark rules give Leo all the work and none of the food. He builds a fish trap; Jade bets she can out-fish him and loses. Cliffhanger: the water bottles are empty."
+  - "Part 3 - Thirst: Vanessa rations water to everyone but Leo. Leo finds the inland stream and builds a filter. Cliffhanger: Mia is caught bringing Leo food."
+  - "Part 4 - Storm night: the tarp camp floods; the women have to ask Leo for shelter. He lets them in without a word. Cliffhanger: in the dark, Leo sees Vanessa hiding her smartwatch."
+  - "Part 5 - Ship on the horizon (midpoint): a ship passes; Jade grabs the flare gun to prove herself and fires it wrong. The ship sails on. Cliffhanger: Jade is swept off the rocks by the tide."
+  - "Part 6 - The rescue: Leo pulls Jade out; she owes him and starts helping. Mia is kicked out of camp for siding with Leo and joins him. Cliffhanger: someone has smashed Leo's water filter."
+  - "Part 7 - Sabotage: everyone suspects everyone. Vanessa sprains her ankle searching the hill; Leo carries her back and splints it. Cliffhanger: Priya reads Vanessa's smartwatch log: 'Alarm silenced, 2:14 a.m.'"
+  - "Part 8 - The truth: Priya confronts Vanessa in front of everyone. Vanessa admits she silenced the alarm. The camp turns on her; Leo stops them. Cliffhanger: Leo says the yacht's radio might still work."
+  - "Part 9 - Power: Priya rewrites the rules ('Leo runs anything that floats'). The whole group, for the first time, follows Leo's plan to salvage the radio and build a hand-crank generator. Cliffhanger: the radio crackles, then dies."
+  - "Part 10 - Signal: one last fix, a voice answers, and a ship's lights appear at dusk. On the rescue boat Vanessa finally apologises and thanks Leo in front of everyone. Final shot: Leo looks back at the island and smiles."

@@ -87,3 +87,25 @@ def test_clip_seconds_bounds():
 
     assert clip_seconds({"lines": []}) == 5
     assert clip_seconds({"lines": [{"text": "word " * 200}]}) == 15
+
+
+def test_photoreal_still_uses_portraits_of_characters_in_frame(tmp_path, monkeypatch):
+    from app.services import series_realistic as real
+
+    bible = {"protagonist": "leo", "setting": {}, "characters": {
+        "leo": {"name": "Leo", "look": "blue shirt"},
+        "mia": {"name": "Mia", "look": "yellow hoodie"},
+        "jade": {"name": "Jade", "look": "green top"}}}
+    scene = {"id": "s3", "shot": "close-up", "characters": ["mia", "leo"],
+             "lines": [{"speaker": "jade", "text": "Off screen!"}, {"speaker": "mia", "text": "Here."}]}
+    for cid in bible["characters"]:
+        (tmp_path / f"{cid}.png").write_bytes(b"png")
+    sent = {}
+    monkeypatch.setattr(real, "_post", lambda path, body, timeout: sent.update(body) or
+                        {"candidates": [{"content": {"parts": [{"inlineData": {"data": "AAAA"}}]}}]})
+    real.make_still(bible, scene, {c: tmp_path / f"{c}.png" for c in bible["characters"]}, tmp_path / "s3.png")
+    parts = sent["contents"][0]["parts"]
+    assert "Leo is the person in reference image 1" in parts[0]["text"]
+    assert "Mia is the person in reference image 2" in parts[0]["text"]
+    assert len(parts) == 3  # Jade speaks off screen, so no portrait for her
+    assert sent["generationConfig"]["imageConfig"]["aspectRatio"] == "9:16"

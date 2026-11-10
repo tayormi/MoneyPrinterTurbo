@@ -180,44 +180,61 @@ def plan_episode(series: Series, number: int, force: bool = False) -> dict:
     if ep_file.exists() and not force:
         return json.loads(ep_file.read_text(encoding="utf-8"))
 
-    recaps = []
+    recaps, last_cliffhanger = [], ""
     for previous in range(1, number):
         prev_file = series.out / f"ep{previous:02d}" / "episode.json"
         if prev_file.exists():
             prev = json.loads(prev_file.read_text(encoding="utf-8"))
-            recaps.append(f"Ep {previous} \"{prev.get('title')}\": {prev.get('recap')}")
+            recaps.append(f"Part {previous} \"{prev.get('title')}\": {prev.get('recap')}")
+            if previous == number - 1 and prev.get("scenes"):
+                last = prev["scenes"][-1]
+                last_cliffhanger = f"{last.get('shot', '')} " + " ".join(
+                    f"{l['speaker']}: {l['text']}" for l in last.get("lines", []))
     arc = series.bible.get("season_arc") or []
     arc_beat = arc[number - 1] if 0 < number <= len(arc) else "Continue the story naturally from the recaps."
     fmt = series.bible.get("format", {})
+    total = fmt.get("parts", len(arc) or "?")
+    shots = fmt.get("shots_per_episode") or fmt.get("scenes_per_episode", [7, 9])
+    shot_secs = fmt.get("shot_seconds", [3, 8])
+    max_lines = fmt.get("max_lines_per_shot", 3)
+    max_words = fmt.get("max_words_per_line", 16)
     char_ids = ", ".join(series.characters)
 
-    prompt = f"""You are the head writer of a vertical short-video series. Write episode {number}.
+    prompt = f"""You are the head writer of a fast-paced vertical short-video series for TikTok.
+Write part {number} of {total}. Viewers swipe away in under 2 seconds if the opening is slow.
 
-SERIES BIBLE (follow it, including the guardrails):
+SERIES BIBLE (follow it exactly, including structure and guardrails):
 {series.bible_text()}
 
 STORY SO FAR:
-{chr(10).join(recaps) if recaps else "This is the first episode."}
+{chr(10).join(recaps) if recaps else "This is the first part."}
+{f"PREVIOUS PART ENDED ON (pay this off in shots 1-2): {last_cliffhanger}" if last_cliffhanger else ""}
 
-THIS EPISODE'S BEAT: {arc_beat}
+THIS PART'S BEAT: {arc_beat}
 
-Write {fmt.get('scenes_per_episode', [7, 9])} scenes and {fmt.get('spoken_words_per_episode', [170, 230])} spoken words in total.
-Each scene is one illustrated shot with 1-4 spoken lines. Lines are short and natural for speech.
+Pacing rules:
+- {shots[0]}-{shots[-1]} shots. Each shot is one continuous camera shot of {shot_secs[0]}-{shot_secs[-1]} seconds.
+- At most {max_lines} spoken lines per shot, at most {max_words} words per line. Some shots can be silent reactions or action.
+- {fmt.get('spoken_words_per_episode', [150, 200])} spoken words in total.
+- Shot 1 is the hook; the last shot is the cliffhanger (see the bible's structure).
+- Vary framing: close-ups for reactions and punchlines, wides to show the island and the problem.
 Use only these speaker ids: {char_ids}.
 
 Return ONLY JSON in this exact shape:
 {{
-  "title": "short episode title",
-  "caption": "TikTok caption, one punchy sentence plus 3-5 hashtags",
+  "title": "short punchy title",
+  "hook": "the first line a viewer hears",
+  "cliffhanger": "the final line or reveal",
+  "caption": "TikTok caption: 'Part {number}/{total}', one punchy sentence, 3-5 hashtags",
   "scenes": [
     {{
       "id": "s1",
-      "shot": "one-paragraph visual description of the single illustrated frame: location, time of day, who is in frame, their poses and expressions, framing (wide / medium / close-up)",
+      "shot": "one-paragraph visual description of this single shot: location, time of day, who is in frame, action, expressions, framing (wide / medium / close-up)",
       "characters": ["leo", "vanessa"],
       "lines": [{{"speaker": "leo", "text": "..."}}]
     }}
   ],
-  "recap": "3-4 sentence summary of what happened, for writing the next episode"
+  "recap": "3-4 sentence summary of what happened, including any mystery clue, for writing the next part"
 }}"""
     episode = _extract_json(_ask(prompt))
     known = set(series.characters)
@@ -227,6 +244,7 @@ Return ONLY JSON in this exact shape:
             if line.get("speaker") not in known:
                 raise SeriesError(f"unknown speaker {line.get('speaker')!r} in {scene.get('id')}")
     episode["number"] = number
+    episode["total"] = total
     ep_file.write_text(json.dumps(episode, indent=2, ensure_ascii=False), encoding="utf-8")
     logger.success(f"planned episode {number}: {episode.get('title')} -> {ep_file}")
     return episode
@@ -340,13 +358,22 @@ def _write_srt(timeline: list[dict], path: Path) -> None:
     )
 
 
-def _still_to_clip(png: Path, seconds: float, out: Path, zoom_in: bool) -> None:
+def _still_to_clip(png: Path, seconds: float, out: Path, zoom_in: bool = True, move: int | None = None) -> None:
+    """Animate a still: 0 zoom in, 1 zoom out, 2 pan left, 3 pan right (Ken Burns)."""
     frames = max(1, round(seconds * FPS))
-    zoom = f"1+0.08*on/{frames}" if zoom_in else f"1.08-0.08*on/{frames}"
+    move = (0 if zoom_in else 1) if move is None else move % 4
+    if move in (0, 1):
+        zoom = f"1+0.10*on/{frames}" if move == 0 else f"1.10-0.10*on/{frames}"
+        x, y = "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
+    else:
+        zoom = "1.12"
+        travel = f"(iw-iw/zoom)*on/{frames}"
+        x = f"(iw-iw/zoom)-{travel}" if move == 2 else travel
+        y = "ih/2-(ih/zoom/2)"
     subprocess.run(
         [_ffmpeg(), "-y", "-loglevel", "error", "-i", str(png), "-vf",
          f"scale={WIDTH * 2}:{HEIGHT * 2},zoompan=z='{zoom}':d={frames}:"
-         f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={WIDTH}x{HEIGHT}:fps={FPS},format=yuv420p",
+         f"x='{x}':y='{y}':s={WIDTH}x{HEIGHT}:fps={FPS},format=yuv420p",
          "-frames:v", str(frames), "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", str(out)],
         check=True,
     )
@@ -450,6 +477,65 @@ def _render_realistic(series: Series, episode: dict, folder: Path, force: bool) 
     return combined
 
 
+def _add_title_card(src: Path, out: Path, text: str, font_name: str, seconds: float = 1.8) -> None:
+    """Burn a 'PART N/10' banner into the first seconds (PIL image + ffmpeg overlay)."""
+    from PIL import Image, ImageDraw, ImageFont
+
+    from app.utils import utils
+
+    font_path = Path(utils.font_dir()) / font_name
+    try:
+        font = ImageFont.truetype(str(font_path), 64)
+    except OSError:
+        font = ImageFont.load_default(64)
+    card = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(card)
+    left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+    w, h = right - left, bottom - top
+    x, y = (WIDTH - w) // 2, 230
+    draw.rounded_rectangle((x - 36, y - 26, x + w + 36, y + h + 34), radius=22, fill=(0, 0, 0, 170))
+    draw.text((x - left, y - top), text, font=font, fill=(255, 255, 255, 255))
+    png = out.with_suffix(".title.png")
+    card.save(png)
+    subprocess.run(
+        [_ffmpeg(), "-y", "-loglevel", "error", "-i", str(src), "-i", str(png), "-filter_complex",
+         f"[0:v][1:v]overlay=0:0:enable='lt(t,{seconds})'[v]", "-map", "[v]", "-map", "0:a?",
+         "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-c:a", "copy", str(out)],
+        check=True,
+    )
+    png.unlink(missing_ok=True)
+
+
+def _render_stills(series: Series, episode: dict, folder: Path, force: bool) -> Path:
+    """Photoreal stills (Gemini image model, cast portraits as references) + local voices."""
+    from app.services import series_realistic as real
+
+    model = (series.bible.get("render") or {}).get("image_model", real.DEFAULT_IMAGE_MODEL)
+    portraits = ensure_portraits(series)
+
+    def one(scene):
+        out = folder / "scenes" / f"{scene['id']}.photo.png"
+        if force or not out.exists():
+            real.make_still(series.bible, scene, portraits, out, model)
+        return out
+
+    logger.info(f"generating {len(episode['scenes'])} photoreal stills with {model}")
+    with ThreadPoolExecutor(LLM_WORKERS) as pool:
+        stills = list(pool.map(one, episode["scenes"]))
+
+    logger.info("recording voices")
+    timeline = _voice_lines(series, episode, folder / "audio", force)
+    _write_srt(timeline, folder / "subtitles.srt")
+
+    logger.info("animating stills")
+    clips = []
+    for i, (scene, png) in enumerate(zip(episode["scenes"], stills)):
+        clip = folder / "clips" / f"{scene['id']}.mp4"
+        _still_to_clip(png, (scene["_end_ms"] - scene["_start_ms"]) / 1000, clip, move=i)
+        clips.append(clip)
+    return _concat(clips, folder / "clips" / "combined.mp4")
+
+
 def render_episode(series: Series, number: int, force: bool = False, bgm_volume: float = 0.12,
                    visuals: str | None = None) -> Path:
     folder = series.episode_dir(number)
@@ -463,13 +549,16 @@ def render_episode(series: Series, number: int, force: bool = False, bgm_volume:
     visuals = visuals or (series.bible.get("render") or {}).get("visuals", "drawn")
     if visuals == "realistic":
         combined = _render_realistic(series, episode, folder, force)
+    elif visuals == "stills":
+        combined = _render_stills(series, episode, folder, force)
     elif visuals == "drawn":
         combined = _render_drawn(series, episode, folder, force)
     else:
-        raise SeriesError(f"unknown visuals {visuals!r}; use 'drawn' or 'realistic'")
+        raise SeriesError(f"unknown visuals {visuals!r}; use 'drawn', 'stills' or 'realistic'")
 
     logger.info("mixing voice, music and subtitles")
-    final = folder / f"{series.slug}-ep{number:02d}{'-real' if visuals == 'realistic' else ''}.mp4"
+    final = folder / f"{series.slug}-ep{number:02d}{ {'realistic': '-real', 'stills': '-photo'}.get(visuals, '') }.mp4"
+    captions = series.bible.get("captions") or {}
     params = VideoParams(
         video_subject=episode.get("title", f"Episode {number}"),
         video_aspect="9:16",
@@ -477,9 +566,20 @@ def render_episode(series: Series, number: int, force: bool = False, bgm_volume:
         bgm_type="random",
         bgm_volume=bgm_volume,
         voice_volume=1.0,
+        font_name=captions.get("font", "STHeitiMedium.ttc"),
+        font_size=int(captions.get("font_size", 60)),
+        stroke_width=float(captions.get("stroke_width", 1.5)),
+        subtitle_position="custom" if "position_percent" in captions else "bottom",
+        custom_position=float(captions.get("position_percent", 70.0)),
     )
+    title_card = series.bible.get("title_card")
+    mixed = folder / "clips" / "mixed.mp4" if title_card else final
     video.generate_video(str(combined), str(folder / "audio" / "voice.mp3"),
-                         str(folder / "subtitles.srt"), str(final), params)
+                         str(folder / "subtitles.srt"), str(mixed), params)
+    if title_card:
+        total = episode.get("total") or (series.bible.get("format") or {}).get("parts", "?")
+        _add_title_card(mixed, final, title_card.format(n=number, total=total),
+                        captions.get("font", "BeVietnamPro-Bold.ttf"))
     (folder / "caption.txt").write_text(episode.get("caption", ""), encoding="utf-8")
     logger.success(f"episode {number} ready: {final}")
     return final
@@ -502,10 +602,10 @@ def main(argv: list[str] | None = None) -> int:
         p = sub.add_parser(name)
         p.add_argument("--episode", type=int, required=True)
         p.add_argument("--force", action="store_true", help="redo this step even if files exist")
-    sub.choices["render"].add_argument("--visuals", choices=["drawn", "realistic"],
+    sub.choices["render"].add_argument("--visuals", choices=["drawn", "stills", "realistic"],
                                        help="override the bible's render.visuals")
     nxt = sub.add_parser("next", help="plan and render the next unplanned episode")
-    nxt.add_argument("--visuals", choices=["drawn", "realistic"])
+    nxt.add_argument("--visuals", choices=["drawn", "stills", "realistic"])
     args = parser.parse_args(argv)
 
     series = Series.load(args.series)
