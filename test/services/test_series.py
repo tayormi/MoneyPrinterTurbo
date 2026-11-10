@@ -56,3 +56,34 @@ def test_coral_key_bible_is_complete():
     for char in s.characters.values():
         assert char["voice"] and char["look"] and char["name"]
     assert len(s.bible["season_arc"]) == 10
+
+
+def test_realistic_refs_prefer_protagonist(tmp_path, monkeypatch):
+    from app.services import series_realistic as real
+
+    bible = {"protagonist": "leo", "setting": {}, "characters": {
+        "leo": {"name": "Leo", "look": "blue shirt"},
+        "vanessa": {"name": "Vanessa", "look": "white blazer", "voice_style": "cool"},
+        "jade": {"name": "Jade", "look": "green top"}}}
+    scene = {"id": "s1", "shot": "beach", "characters": ["vanessa", "jade", "leo"],
+             "lines": [{"speaker": "vanessa", "text": "Staff sleep elsewhere."},
+                       {"speaker": "jade", "text": "Try the rocks."}]}
+    for cid in bible["characters"]:
+        (tmp_path / f"{cid}.png").write_bytes(b"png")
+    sent = {}
+    monkeypatch.setattr(real, "_post", lambda path, body, timeout: sent.update(body) or
+                        {"steps": [{"content": [{"type": "video", "data": "AAAA"}]}]})
+    real.make_clip(bible, scene, {c: tmp_path / f"{c}.png" for c in bible["characters"]}, tmp_path / "out.mp4")
+    prompt = sent["input"][0]["text"]
+    assert "Leo is the person in <IMAGE_REF_0>" in prompt
+    assert "Vanessa is the person in <IMAGE_REF_1>" in prompt
+    assert "Jade: green top" in prompt
+    assert len(sent["input"]) == 3  # text + 2 reference images
+    assert sent["response_format"]["aspect_ratio"] == "9:16"
+
+
+def test_clip_seconds_bounds():
+    from app.services.series_realistic import clip_seconds
+
+    assert clip_seconds({"lines": []}) == 5
+    assert clip_seconds({"lines": [{"text": "word " * 200}]}) == 15

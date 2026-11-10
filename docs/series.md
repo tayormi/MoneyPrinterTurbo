@@ -5,8 +5,28 @@ episode comes from a **series bible**: the cast, how each character looks and
 sounds, the art style and the season arc. The planner also reads a **recap** of
 every earlier episode, so the plot carries on from one episode to the next.
 
-Everything runs locally on your Claude subscription and the offline Kokoro voices.
-No paid services are involved.
+There are two visual modes, set by `render.visuals` in the bible or with `--visuals`:
+
+| Mode | Looks like | Voices | Cost |
+|---|---|---|---|
+| `realistic` | Live-action clips from Gemini Omni Flash, with characters pinned to photoreal reference portraits | Spoken in the clip with lip-sync | About $0.07 per second of 720p video, so roughly $5–6 for an 80-second episode (Nov 2026) |
+| `drawn` | Claude-drawn illustrated stills with a slow zoom | Local Kokoro voice per character | Free on your Claude plan |
+
+Episode writing always runs on your Claude subscription.
+
+## Realistic mode
+
+```bash
+export GEMINI_API_KEY=...          # Google AI Studio key with billing (or gemini_api_key in config.toml)
+uv run python -m app.services.series series/coral-key portraits          # photoreal cast, once
+uv run python -m app.services.series series/coral-key render --episode 1 --visuals realistic
+```
+
+- Veo was removed from the Gemini API on 22 Oct 2026, and Gemini Omni Flash replaced it. This mode calls `gemini-omni-1.2-flash` through the Interactions API.
+- Each clip can pin **two** characters to their portraits. The `protagonist` always gets a slot when in frame, then speakers, then anyone else. Others are described in text, so they may drift slightly.
+- Give every character a `voice_style` such as "calm, low American male voice", so their voice stays similar from clip to clip.
+- Subtitles are spread across each clip in proportion to line length. They are close, but not word-accurate.
+- TikTok requires a visible AI label on realistic synthetic people. Keep every character fictional.
 
 ## Quick start (the included series, *Coral Key*)
 
@@ -26,7 +46,7 @@ The output for each episode goes to `storage/series/coral-key/epNN/`:
 
 | File | What it is |
 |---|---|
-| `coral-key-epNN.mp4` | The finished 1080×1920 episode, with voices, subtitles and music |
+| `coral-key-epNN.mp4` / `-real.mp4` | The finished 1080×1920 episode (drawn / realistic), with voices, subtitles and music |
 | `caption.txt` | A TikTok caption with hashtags |
 | `episode.json` | The script: scenes, shot descriptions, who says what, and the recap |
 | `scenes/sN.svg` / `.png` | One illustration per scene |

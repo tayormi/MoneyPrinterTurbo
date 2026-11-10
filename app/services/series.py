@@ -352,15 +352,8 @@ def _still_to_clip(png: Path, seconds: float, out: Path, zoom_in: bool) -> None:
     )
 
 
-def render_episode(series: Series, number: int, force: bool = False, bgm_volume: float = 0.12) -> Path:
-    folder = series.episode_dir(number)
-    ep_file = folder / "episode.json"
-    if not ep_file.exists():
-        raise SeriesError(f"episode {number} is not planned yet; run `plan --episode {number}` first")
-    episode = json.loads(ep_file.read_text(encoding="utf-8"))
-    for sub in ("scenes", "audio", "clips"):
-        (folder / sub).mkdir(exist_ok=True)
-
+def _render_drawn(series: Series, episode: dict, folder: Path, force: bool) -> Path:
+    """Claude-drawn stills + one TTS voice per character. Returns the silent combined video."""
     if any(not series.sheet_svg(c) for c in series.characters):
         draw_character_sheets(series)
 
@@ -373,22 +366,110 @@ def render_episode(series: Series, number: int, force: bool = False, bgm_volume:
     _write_srt(timeline, folder / "subtitles.srt")
 
     logger.info("animating scenes")
-    clip_list = folder / "clips" / "list.txt"
-    entries = []
+    clips = []
     for i, (scene, png) in enumerate(zip(episode["scenes"], stills)):
         clip = folder / "clips" / f"{scene['id']}.mp4"
         _still_to_clip(png, (scene["_end_ms"] - scene["_start_ms"]) / 1000, clip, zoom_in=i % 2 == 0)
-        entries.append(f"file '{clip.resolve()}'")
-    clip_list.write_text("\n".join(entries) + "\n", encoding="utf-8")
-    combined = folder / "clips" / "combined.mp4"
+        clips.append(clip)
+    return _concat(clips, folder / "clips" / "combined.mp4")
+
+
+def _concat(clips: list[Path], out: Path) -> Path:
+    clip_list = out.parent / "list.txt"
+    clip_list.write_text("".join(f"file '{c.resolve()}'\n" for c in clips), encoding="utf-8")
     subprocess.run(
         [_ffmpeg(), "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(clip_list),
-         "-c", "copy", str(combined)],
+         "-c", "copy", str(out)],
         check=True,
     )
+    return out
+
+
+def ensure_portraits(series: Series, force: bool = False) -> dict:
+    """Photoreal reference portrait per character (Gemini image model)."""
+    from app.services import series_realistic as real
+
+    folder = series.out / "characters"
+    folder.mkdir(parents=True, exist_ok=True)
+    model = (series.bible.get("render") or {}).get("image_model", real.DEFAULT_IMAGE_MODEL)
+
+    def one(item):
+        cid, char = item
+        path = folder / f"{cid}.photo.png"
+        if force or not path.exists():
+            real.make_portrait(char, path, model)
+            logger.info(f"portrait: {path}")
+        return cid, path
+
+    with ThreadPoolExecutor(LLM_WORKERS) as pool:
+        return dict(pool.map(one, series.characters.items()))
+
+
+def _render_realistic(series: Series, episode: dict, folder: Path, force: bool) -> Path:
+    """Live-action clips with spoken dialogue from Gemini Omni. Returns the combined video."""
+    from app.services import series_realistic as real
+
+    settings = series.bible.get("render") or {}
+    model = settings.get("video_model", real.DEFAULT_VIDEO_MODEL)
+    resolution = settings.get("resolution", "720p")
+    portraits = ensure_portraits(series)
+    raw = folder / "clips" / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+
+    def one(scene):
+        out = raw / f"{scene['id']}.mp4"
+        if force or not out.exists():
+            real.make_clip(series.bible, scene, portraits, out, model, resolution)
+        return out
+
+    logger.info(f"generating {len(episode['scenes'])} live-action clips with {model}")
+    with ThreadPoolExecutor(3) as pool:
+        raws = list(pool.map(one, episode["scenes"]))
+
+    clips, timeline, cursor = [], [], 0.0
+    for scene, src in zip(episode["scenes"], raws):
+        clip = folder / "clips" / f"{scene['id']}.mp4"
+        real.normalise_clip(_ffmpeg(), src, clip, WIDTH, HEIGHT, FPS)
+        seconds = real.probe_seconds(_ffmpeg(), clip)
+        lines = scene.get("lines", [])
+        total = sum(len(l["text"]) for l in lines) or 1
+        start, span = cursor + 0.3, max(0.5, seconds - 0.8)
+        for line in lines:
+            length = span * len(line["text"]) / total
+            timeline.append({"text": line["text"], "start": int(start * 1000), "end": int((start + length) * 1000)})
+            start += length
+        cursor += seconds
+        clips.append(clip)
+    _write_srt(timeline, folder / "subtitles.srt")
+    combined = _concat(clips, folder / "clips" / "combined.mp4")
+    subprocess.run(
+        [_ffmpeg(), "-y", "-loglevel", "error", "-i", str(combined), "-vn", "-c:a", "libmp3lame",
+         "-q:a", "2", str(folder / "audio" / "voice.mp3")],
+        check=True,
+    )
+    return combined
+
+
+def render_episode(series: Series, number: int, force: bool = False, bgm_volume: float = 0.12,
+                   visuals: str | None = None) -> Path:
+    folder = series.episode_dir(number)
+    ep_file = folder / "episode.json"
+    if not ep_file.exists():
+        raise SeriesError(f"episode {number} is not planned yet; run `plan --episode {number}` first")
+    episode = json.loads(ep_file.read_text(encoding="utf-8"))
+    for sub in ("scenes", "audio", "clips"):
+        (folder / sub).mkdir(exist_ok=True)
+
+    visuals = visuals or (series.bible.get("render") or {}).get("visuals", "drawn")
+    if visuals == "realistic":
+        combined = _render_realistic(series, episode, folder, force)
+    elif visuals == "drawn":
+        combined = _render_drawn(series, episode, folder, force)
+    else:
+        raise SeriesError(f"unknown visuals {visuals!r}; use 'drawn' or 'realistic'")
 
     logger.info("mixing voice, music and subtitles")
-    final = folder / f"{series.slug}-ep{number:02d}.mp4"
+    final = folder / f"{series.slug}-ep{number:02d}{'-real' if visuals == 'realistic' else ''}.mp4"
     params = VideoParams(
         video_subject=episode.get("title", f"Episode {number}"),
         video_aspect="9:16",
@@ -415,11 +496,16 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     sheets = sub.add_parser("characters", help="draw a reference sheet per character")
     sheets.add_argument("--force", action="store_true")
+    photos = sub.add_parser("portraits", help="photoreal reference portrait per character (Gemini)")
+    photos.add_argument("--force", action="store_true")
     for name in ("plan", "render"):
         p = sub.add_parser(name)
         p.add_argument("--episode", type=int, required=True)
         p.add_argument("--force", action="store_true", help="redo this step even if files exist")
-    sub.add_parser("next", help="plan and render the next unplanned episode")
+    sub.choices["render"].add_argument("--visuals", choices=["drawn", "realistic"],
+                                       help="override the bible's render.visuals")
+    nxt = sub.add_parser("next", help="plan and render the next unplanned episode")
+    nxt.add_argument("--visuals", choices=["drawn", "realistic"])
     args = parser.parse_args(argv)
 
     series = Series.load(args.series)
@@ -427,17 +513,22 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "characters":
             for path in draw_character_sheets(series, force=args.force):
                 print(path.with_suffix(".png"))
+        elif args.command == "portraits":
+            for path in ensure_portraits(series, force=args.force).values():
+                print(path)
         elif args.command == "plan":
             episode = plan_episode(series, args.episode, force=args.force)
             print(json.dumps(episode, indent=2, ensure_ascii=False))
         elif args.command == "render":
-            print(render_episode(series, args.episode, force=args.force))
+            print(render_episode(series, args.episode, force=args.force, visuals=args.visuals))
         elif args.command == "next":
             planned = series.planned_episodes()
             number = (planned[-1] + 1) if planned else 1
             plan_episode(series, number)
-            print(render_episode(series, number))
-    except SeriesError as exc:
+            print(render_episode(series, number, visuals=args.visuals))
+    except Exception as exc:
+        if not isinstance(exc, SeriesError) and type(exc).__name__ != "RealisticError":
+            raise
         print(f"error: {exc}", file=sys.stderr)
         return 1
     return 0

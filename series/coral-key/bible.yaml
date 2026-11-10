@@ -18,6 +18,15 @@ format:
   narration: "Leo narrates in first person, dry and understated. Other characters speak their own lines."
   spoken_words_per_episode: [170, 230]
 
+render:
+  # drawn: Claude-drawn illustrated stills + local Kokoro voices (free).
+  # realistic: live-action clips with spoken dialogue from Gemini Omni Flash
+  #            (needs GEMINI_API_KEY; about $0.07 per second of 720p video).
+  visuals: realistic
+  video_model: gemini-omni-1.2-flash
+  image_model: gemini-3.1-flash-image
+  resolution: 720p
+
 tone: >
   Survival comedy-drama. Petty camp politics, slapstick mishaps, satisfying comebacks.
   Leo wins through skill, patience and wit, never through cruelty.
@@ -36,32 +45,39 @@ art_style: >
   simple dot eyes with small white highlights, expressive eyebrows, no text anywhere.
   Full-bleed 1080x1920 portrait canvas, characters large in frame, readable at phone size.
 
+protagonist: leo   # always gets a reference slot when in frame (realistic visuals)
+
 characters:
   leo:
     name: Leo
     role: "Protagonist and narrator. Former boat mechanic on the yacht, 30, calm, inventive, dry humor."
     look: "Medium-brown skin (#8D5A3B), short black curly hair, light stubble, rolled-sleeve faded blue work shirt (#3D6FA8), khaki shorts (#B59B6A), barefoot, carries a small orange multitool (#F28C38)."
     voice: "kokoro:am_michael"
+    voice_style: "calm, dry, low-pitched American male voice"   # how the realistic video model speaks their lines
   vanessa:
     name: Vanessa
     role: "Self-appointed leader, startup CEO, 35. Gives orders, takes credit, terrified of losing control. Arc: learns to listen."
     look: "Light skin (#F1C9A5), sleek platinum-blonde bob, large white sunglasses pushed up on her head, tailored white blazer over a coral top (#F2665E), gold hoop earrings."
     voice: "kokoro:af_bella"
+    voice_style: "crisp, cool, commanding American female voice"   # how the realistic video model speaks their lines
   jade:
     name: Jade
     role: "Fitness coach, 28, competitive and mocking, hates being outdone. Arc: becomes Leo's grudging teammate."
     look: "Dark brown skin (#5C3A21), high box-braid ponytail with purple accents (#7B4FB0), neon-green sports top (#7BD94C), black leggings, sweatband on her wrist."
     voice: "kokoro:af_nicole"
+    voice_style: "energetic, teasing, confident American female voice"   # how the realistic video model speaks their lines
   priya:
     name: Priya
     role: "Corporate lawyer, 33, writes camp 'rules' on bark that always favor the group over Leo. Arc: rewrites the rules to be fair."
     look: "Tan skin (#C68E5E), long straight black hair in a low ponytail, thin round glasses, navy button-up shirt (#22355E) with sleeves rolled, small notebook."
     voice: "kokoro:bf_emma"
+    voice_style: "precise, clipped British female voice"   # how the realistic video model speaks their lines
   mia:
     name: Mia
     role: "Youngest, 22, art student, follows the group to fit in but secretly helps Leo. Arc: stands up to the others."
     look: "Light-olive skin (#E0B48C), messy auburn bun (#A0442A) with a yellow scrunchie, oversized mustard-yellow hoodie (#E8B73A), denim shorts, paint smudge on one cheek."
     voice: "kokoro:af_sky"
+    voice_style: "soft, warm, slightly hesitant young American female voice"   # how the realistic video model speaks their lines
 
 setting:
   island: "Coral Key: a small crescent island with a white beach, palm grove, a rocky hill with a cave, a freshwater stream inland, and the half-sunk yacht wreck on the reef."
