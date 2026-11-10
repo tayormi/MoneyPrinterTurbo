@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
 
-DEFAULT_LLM_PROVIDER_ID = "moonshot"
+# This fork runs on a Claude subscription through the local `claude` CLI.
+DEFAULT_LLM_PROVIDER_ID = "claude_code"
 
 
 @dataclass(frozen=True, slots=True)

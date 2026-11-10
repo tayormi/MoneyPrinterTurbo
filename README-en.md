@@ -18,6 +18,8 @@ English | [简体中文](README.md) | [日本語](README-ja.md) | [Releases](htt
 
 </div>
 
+> **This fork runs on a Claude subscription.** Run `./claude-local.sh` to set up and start everything locally. See [docs/claude-local.md](docs/claude-local.md).
+
 ## Screenshots 🖥️
 
 <h4 align="center">WebUI</h4>
