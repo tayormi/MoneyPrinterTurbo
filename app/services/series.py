@@ -519,13 +519,14 @@ def _render_stills(series: Series, episode: dict, folder: Path, force: bool) -> 
             real.make_still(series.bible, scene, portraits, out, model)
         return out
 
-    logger.info(f"generating {len(episode['scenes'])} photoreal stills with {model}")
-    with ThreadPoolExecutor(LLM_WORKERS) as pool:
-        stills = list(pool.map(one, episode["scenes"]))
-
+    # Free local voices first, so a script or voice problem shows up before any paid image call.
     logger.info("recording voices")
     timeline = _voice_lines(series, episode, folder / "audio", force)
     _write_srt(timeline, folder / "subtitles.srt")
+
+    logger.info(f"generating {len(episode['scenes'])} photoreal stills with {model}")
+    with ThreadPoolExecutor(LLM_WORKERS) as pool:
+        stills = list(pool.map(one, episode["scenes"]))
 
     logger.info("animating stills")
     clips = []
