@@ -42,6 +42,16 @@ render:
   video_model: gemini-omni-1.2-flash
   image_model: gemini-3.1-flash-image
   resolution: 720p
+  # comfy: full-motion clips from open models in ComfyUI on a rented GPU (GPU time only).
+  # Steps and all settings: docs/comfyui.md. Use with --visuals comfy.
+  # comfy:
+  #   video_workflow: comfy/ltx25-i2v.json    # Workflow > Export (API) from ComfyUI
+  #   audio: clip                             # clip = the model speaks; kokoro = local voices
+  #   first_frames: portrait
+  #   gpu_usd_per_hour: 0.34
+  #   video_inputs:                           # node numbers come from the comfy-check command
+  #     "6.text": "{{prompt}}"
+  #     "12.image": "{{image}}"
 
 tone: >
   Survival comedy-drama. Petty camp politics, slapstick mishaps, satisfying comebacks.

@@ -5,11 +5,12 @@ episode comes from a **series bible**: the cast, how each character looks and
 sounds, the art style and the season arc. The planner also reads a **recap** of
 every earlier episode, so the plot carries on from one episode to the next.
 
-There are two visual modes, set by `render.visuals` in the bible or with `--visuals`:
+There are four visual modes, set by `render.visuals` in the bible or with `--visuals`:
 
 | Mode | Looks like | Voices | Cost |
 |---|---|---|---|
 | `realistic` | Live-action clips from Gemini Omni Flash, with characters pinned to photoreal reference portraits | Spoken in the clip with lip-sync | About $0.07 per second of 720p video, so roughly $5–6 for an 80-second episode (Nov 2026) |
+| `comfy` | Live-action clips from open models (LTX-2.5, Wan, ...) in ComfyUI on your own or a rented GPU. See [comfyui.md](comfyui.md) | Spoken in the clip, or local Kokoro voices | GPU time only, about $0.34 per hour for a rented RTX 4090 (Nov 2026) |
 | `stills` | One photoreal Gemini image per shot, with the cast portraits as references, plus a camera move (zoom in/out, pan) | Local Kokoro voice per character | Roughly $0.30–0.60 per episode in image calls (estimate, Nov 2026) |
 | `drawn` | Claude-drawn illustrated stills with a slow zoom | Local Kokoro voice per character | Free on your Claude plan |
 
@@ -68,7 +69,7 @@ The output for each episode goes to `storage/series/coral-key/epNN/`:
 
 | File | What it is |
 |---|---|
-| `coral-key-epNN.mp4` / `-real.mp4` | The finished 1080×1920 episode (drawn / realistic), with voices, subtitles and music |
+| `coral-key-epNN.mp4` / `-real.mp4` / `-comfy.mp4` | The finished 1080×1920 episode (drawn / realistic / comfy), with voices, subtitles and music |
 | `caption.txt` | A TikTok caption with hashtags |
 | `episode.json` | The script: scenes, shot descriptions, who says what, and the recap |
 | `scenes/sN.svg` / `.png` | One illustration per scene |

@@ -19,6 +19,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -412,24 +413,57 @@ def _concat(clips: list[Path], out: Path) -> Path:
     return out
 
 
+def portrait_prompt(character: dict) -> str:
+    return (
+        f"Photorealistic full-body character reference photo of a fictional adult: "
+        f"{character['name']}, {character.get('role', '')} "
+        f"Appearance: {character.get('look', '')} "
+        "Standing facing the camera, neutral relaxed expression, plain light-grey studio "
+        "background, soft even lighting, sharp focus, natural skin texture, 35mm photo. "
+        "Not a real or famous person. No text."
+    )
+
+
 def ensure_portraits(series: Series, force: bool = False) -> dict:
-    """Photoreal reference portrait per character (Gemini image model)."""
+    """Photoreal reference portrait per character.
+
+    Made by the ComfyUI workflow in render.comfy.portrait_workflow when that is set
+    (free on your own GPU), otherwise by the Gemini image model.
+    """
     from app.services import series_realistic as real
 
     folder = series.out / "characters"
     folder.mkdir(parents=True, exist_ok=True)
-    model = (series.bible.get("render") or {}).get("image_model", real.DEFAULT_IMAGE_MODEL)
+    render = series.bible.get("render") or {}
+    model = render.get("image_model", real.DEFAULT_IMAGE_MODEL)
+    comfy_cfg = render.get("comfy") or {}
+    todo = [cid for cid in series.characters if force or not (folder / f"{cid}.photo.png").exists()]
 
-    def one(item):
-        cid, char = item
+    if todo and comfy_cfg.get("portrait_workflow"):
+        from app.services import comfyui_client as comfy
+
+        try:
+            client = comfy.ComfyUI(comfy_cfg.get("url"), timeout=int(comfy_cfg.get("timeout", 1800)))
+            workflow = _comfy_workflow(series, comfy_cfg, "portrait")
+            for index, cid in enumerate(todo):
+                values = {"prompt": portrait_prompt(series.characters[cid]), "seed": 1000 + index,
+                          "width": int(comfy_cfg.get("width", 720)), "height": int(comfy_cfg.get("height", 1280)),
+                          "prefix": f"{series.slug}-{cid}-portrait"}
+                client.run(workflow, values, folder / f"{cid}.photo.png", comfy.IMAGE_SUFFIXES)
+                logger.info(f"portrait: {folder / f'{cid}.photo.png'}")
+        except comfy.ComfyError as exc:
+            raise SeriesError(str(exc)) from exc
+        todo = []
+
+    def one(cid):
         path = folder / f"{cid}.photo.png"
-        if force or not path.exists():
-            real.make_portrait(char, path, model)
+        if cid in todo:
+            real.make_portrait(series.characters[cid], path, model)
             logger.info(f"portrait: {path}")
         return cid, path
 
     with ThreadPoolExecutor(LLM_WORKERS) as pool:
-        return dict(pool.map(one, series.characters.items()))
+        return dict(pool.map(one, series.characters))
 
 
 def _render_realistic(series: Series, episode: dict, folder: Path, force: bool) -> Path:
@@ -453,6 +487,13 @@ def _render_realistic(series: Series, episode: dict, folder: Path, force: bool) 
     with ThreadPoolExecutor(3) as pool:
         raws = list(pool.map(one, episode["scenes"]))
 
+    return _finish_spoken_clips(episode, folder, raws)
+
+
+def _finish_spoken_clips(episode: dict, folder: Path, raws: list[Path]) -> Path:
+    """Clips that already carry their own spoken audio: normalise, caption by line length, join."""
+    from app.services import series_realistic as real
+
     clips, timeline, cursor = [], [], 0.0
     for scene, src in zip(episode["scenes"], raws):
         clip = folder / "clips" / f"{scene['id']}.mp4"
@@ -475,6 +516,254 @@ def _render_realistic(series: Series, episode: dict, folder: Path, force: bool) 
         check=True,
     )
     return combined
+
+
+# --------------------------------------------------------------------------
+# ComfyUI visuals: open models on your own or a rented GPU
+# --------------------------------------------------------------------------
+
+
+def _comfy_settings(series: Series) -> dict:
+    settings = dict((series.bible.get("render") or {}).get("comfy") or {})
+    if not settings.get("video_workflow"):
+        raise SeriesError("render.comfy.video_workflow is not set in the bible (an API-format ComfyUI export)")
+    return settings
+
+
+def _comfy_path(series: Series, name: str) -> Path:
+    path = Path(name).expanduser()
+    return path if path.is_absolute() or path.exists() else series.root / name
+
+
+def _comfy_workflow(series: Series, settings: dict, kind: str) -> dict:
+    """Load render.comfy.<kind>_workflow and apply render.comfy.<kind>_inputs to it."""
+    from app.services import comfyui_client as comfy
+
+    workflow = comfy.load_workflow(_comfy_path(series, settings[f"{kind}_workflow"]))
+    return comfy.set_inputs(workflow, settings.get(f"{kind}_inputs"))
+
+
+COMFY_VALUES = {
+    "video": ["prompt", "image", "seconds", "frames", "fps", "width", "height", "seed", "prefix"],
+    "still": ["prompt", "ref1", "ref2", "ref3", "ref4", "width", "height", "seed", "prefix"],
+    "portrait": ["prompt", "width", "height", "seed", "prefix"],
+}
+
+
+def comfy_check(series: Series) -> str:
+    """Check the ComfyUI server and the bible's workflows without spending GPU time."""
+    from app.services import comfyui_client as comfy
+
+    settings = _comfy_settings(series)
+    lines = []
+    try:
+        client = comfy.ComfyUI(settings.get("url"))
+        stats = client.check()
+        for device in stats.get("devices", []):
+            free = device.get("vram_free")
+            lines.append(f"server {client.url}: {device.get('name', '?')}"
+                         + (f", {free / 2**30:.1f} GB video memory free" if free else ""))
+        for kind, names in COMFY_VALUES.items():
+            if not settings.get(f"{kind}_workflow"):
+                continue
+            workflow = _comfy_workflow(series, settings, kind)
+            text = json.dumps(workflow)
+            used = [n for n in names if re.search(r"\{\{\s*" + n + r"\s*\}\}", text)]
+            comfy.fill_workflow(workflow, dict.fromkeys(names, 1))  # raises on unknown placeholders
+            lines.append(f"\n{kind} workflow {settings[f'{kind}_workflow']}: uses {', '.join(used) or 'NO placeholders'}")
+            if "prompt" not in used or (kind == "video" and "image" not in used):
+                lines.append("  warning: it does not take the prompt"
+                             + (" and the first frame" if kind == "video" else "") + " yet")
+            lines += [f"  {line}" for line in comfy.describe_workflow(workflow)]
+    except comfy.ComfyError as exc:
+        raise SeriesError(str(exc)) from exc
+    return "\n".join(lines)
+
+
+def _setting_text(bible: dict) -> str:
+    setting = bible.get("setting") or {}
+    return " ".join(str(v) for v in setting.values()) if isinstance(setting, dict) else str(setting)
+
+
+def comfy_shot_prompt(bible: dict, scene: dict, spoken: bool) -> str:
+    """Prompt for an image-to-video model: what happens in the shot, and who says what."""
+    chars = bible.get("characters", {})
+    people = [f"{chars[cid]['name']} ({chars[cid].get('look', '')})" for cid in scene.get("characters", [])]
+    parts = [
+        "Photorealistic live-action shot from a vertical TV drama. One continuous take, natural light, "
+        "handheld cinema camera, real skin texture. No on-screen text, no subtitles, no music.",
+        f"Setting: {_setting_text(bible)}",
+        f"People in frame: {'; '.join(people)}." if people else "",
+        f"Action: {scene['shot']}",
+    ]
+    if spoken and scene.get("lines"):
+        for line in scene["lines"]:
+            c = chars[line["speaker"]]
+            parts.append(f"{c['name']} says in a {c.get('voice_style', 'natural')} voice: \"{line['text']}\"")
+        parts.append("Lips move in sync with the words. Quiet natural ambience of the location underneath.")
+    elif scene.get("lines"):
+        speakers = ", ".join(dict.fromkeys(chars[l["speaker"]]["name"] for l in scene["lines"]))
+        parts.append(f"{speakers} is talking, mouth moving naturally.")
+    else:
+        parts.append("Nobody speaks. Natural ambience of the location.")
+    return "\n".join(p for p in parts if p)
+
+
+def _has_audio(path: Path) -> bool:
+    info = subprocess.run([_ffmpeg(), "-i", str(path)], capture_output=True, text=True).stderr
+    return "Audio:" in info
+
+
+def _fit_clip(src: Path, out: Path, seconds: float | None, keep_audio: bool) -> None:
+    """Scale a clip to the episode frame. With ``seconds`` it is trimmed, or its last frame held,
+    to exactly that length. Spoken clips always leave with an audio track (silence if the model
+    made none) so they can be joined."""
+    vf = f"scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase:flags=lanczos,crop={WIDTH}:{HEIGHT},fps={FPS},format=yuv420p"
+    if seconds:
+        vf += f",tpad=stop_mode=clone:stop_duration={seconds:.3f}"
+    cmd = [_ffmpeg(), "-y", "-loglevel", "error", "-i", str(src)]
+    silent_fill = keep_audio and not _has_audio(src)
+    if silent_fill:
+        cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
+    cmd += ["-vf", vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "19"]
+    if keep_audio:
+        cmd += ["-map", "0:v:0", "-map", "1:a:0" if silent_fill else "0:a:0",
+                "-c:a", "aac", "-ar", "44100", "-ac", "2", "-b:a", "192k"]
+        if silent_fill:
+            cmd += ["-shortest"]
+    else:
+        cmd += ["-an"]
+    if seconds:
+        cmd += ["-t", f"{seconds:.3f}"]
+    subprocess.run(cmd + [str(out)], check=True)
+
+
+def _render_comfy(series: Series, episode: dict, folder: Path, force: bool) -> Path:
+    """Full-motion clips from open models in ComfyUI.
+
+    render.comfy.audio decides where the voices come from:
+      clip   - the video model speaks the lines itself (LTX-style models with sound)
+      kokoro - local Kokoro voices over silent clips (Wan / Hunyuan style models)
+    """
+    from app.services import comfyui_client as comfy
+    from app.services import series_realistic as real
+
+    settings = _comfy_settings(series)
+    audio_mode = settings.get("audio", "clip")
+    if audio_mode not in ("clip", "kokoro"):
+        raise SeriesError(f"render.comfy.audio must be 'clip' or 'kokoro', not {audio_mode!r}")
+    frames_from = settings.get("first_frames", "workflow" if settings.get("still_workflow") else "portrait")
+    fps = int(settings.get("fps", 24))
+    width, height = int(settings.get("width", 720)), int(settings.get("height", 1280))
+    max_seconds = int(settings.get("max_seconds", 10))
+    tries = 1 + int(settings.get("retries", 1))
+
+    client = comfy.ComfyUI(settings.get("url"), timeout=int(settings.get("timeout", 1800)))
+    try:
+        stats = client.check()
+        video_workflow = _comfy_workflow(series, settings, "video")
+        still_workflow = _comfy_workflow(series, settings, "still") if frames_from == "workflow" else None
+    except comfy.ComfyError as exc:
+        raise SeriesError(str(exc)) from exc
+    devices = ", ".join(d.get("name", "?") for d in stats.get("devices", [])) or "unknown device"
+    logger.info(f"comfyui at {client.url}: {devices}")
+
+    timeline = None
+    if audio_mode == "kokoro":  # free and local, so a voice problem shows before any GPU time
+        logger.info("recording voices")
+        timeline = _voice_lines(series, episode, folder / "audio", force)
+        _write_srt(timeline, folder / "subtitles.srt")
+
+    portraits = ensure_portraits(series)
+    uploaded: dict[str, str] = {}
+
+    def upload(path: Path) -> str:
+        key = str(path)
+        if key not in uploaded:
+            uploaded[key] = client.upload_image(path)
+        return uploaded[key]
+
+    def cast_order(scene: dict) -> list[str]:
+        lead = series.bible.get("protagonist")
+        speakers = [line["speaker"] for line in scene.get("lines", [])]
+        in_frame = scene.get("characters", [])
+        order = dict.fromkeys(([lead] if lead in in_frame else []) + speakers + in_frame)
+        return [cid for cid in order if cid in portraits]
+
+    def first_frame(scene: dict, seed: int) -> Path:
+        refs = cast_order(scene)
+        out = folder / "scenes" / f"{scene['id']}.frame.png"
+        if not force and out.exists():
+            return out
+        if frames_from == "portrait":
+            if not refs:
+                raise SeriesError(f"shot {scene['id']} has no character with a portrait to start from; "
+                                  "set render.comfy.still_workflow or first_frames: gemini")
+            return portraits[refs[0]]
+        if frames_from == "gemini":
+            return real.make_still(series.bible, scene, portraits, out)
+        values = {"prompt": real.still_prompt(series.bible, scene, refs[:4]), "width": width,
+                  "height": height, "seed": seed, "prefix": f"{series.slug}-{scene['id']}-frame"}
+        for i in range(4):  # ref1..ref4: cast portraits, repeated when the shot has fewer people
+            values[f"ref{i + 1}"] = upload(portraits[refs[i % len(refs)]]) if refs else ""
+        return client.run(still_workflow, values, out, comfy.IMAGE_SUFFIXES)
+
+    raw = folder / "clips" / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    report = []
+
+    def one(index: int, scene: dict) -> Path:
+        out = raw / f"{scene['id']}.comfy.mp4"
+        if not force and out.exists():
+            return out
+        if audio_mode == "kokoro":
+            seconds = max(2, min(max_seconds, -(-(scene["_end_ms"] - scene["_start_ms"]) // 1000)))
+        else:
+            seconds = min(max_seconds, real.clip_seconds(scene, (3, max_seconds)))
+        last = None
+        for attempt in range(tries):
+            seed = (episode.get("number", 0) * 1000 + index) * 10 + attempt
+            started = time.monotonic()
+            try:
+                frame = first_frame(scene, seed)
+                values = {
+                    "prompt": comfy_shot_prompt(series.bible, scene, spoken=audio_mode == "clip"),
+                    "image": upload(frame), "seconds": seconds, "frames": seconds * fps + 1, "fps": fps,
+                    "width": width, "height": height, "seed": seed,
+                    "prefix": f"{series.slug}-{scene['id']}",
+                }
+                client.run(video_workflow, values, out, comfy.VIDEO_SUFFIXES)
+                report.append({"shot": scene["id"], "seconds": seconds, "attempt": attempt + 1,
+                               "gpu_seconds": round(time.monotonic() - started)})
+                return out
+            except comfy.ComfyError as exc:
+                last = exc
+                logger.warning(f"shot {scene['id']} attempt {attempt + 1} failed: {exc}")
+        raise SeriesError(f"shot {scene['id']} failed after {tries} tries: {last}")
+
+    logger.info(f"generating {len(episode['scenes'])} clips in ComfyUI ({audio_mode} audio, {frames_from} first frames)")
+    raws = [one(i, scene) for i, scene in enumerate(episode["scenes"])]  # one GPU: one job at a time
+    if report:
+        gpu = sum(r["gpu_seconds"] for r in report)
+        rate = float(settings.get("gpu_usd_per_hour", 0) or 0)
+        summary = {"shots": report, "gpu_seconds": gpu, "gpu_usd": round(gpu / 3600 * rate, 3) if rate else None}
+        (folder / "comfy-report.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        logger.info(f"comfyui total: {gpu}s of GPU time" + (f", about ${summary['gpu_usd']}" if rate else ""))
+
+    if audio_mode == "clip":
+        fitted = []
+        for scene, src in zip(episode["scenes"], raws):
+            mid = raw / f"{scene['id']}.fit.mp4"
+            _fit_clip(src, mid, None, keep_audio=True)
+            fitted.append(mid)
+        return _finish_spoken_clips(episode, folder, fitted)
+
+    clips = []
+    for scene, src in zip(episode["scenes"], raws):
+        clip = folder / "clips" / f"{scene['id']}.mp4"
+        _fit_clip(src, clip, (scene["_end_ms"] - scene["_start_ms"]) / 1000, keep_audio=False)
+        clips.append(clip)
+    return _concat(clips, folder / "clips" / "combined.mp4")
 
 
 def _add_title_card(src: Path, out: Path, text: str, font_name: str, seconds: float = 1.8) -> None:
@@ -552,13 +841,15 @@ def render_episode(series: Series, number: int, force: bool = False, bgm_volume:
         combined = _render_realistic(series, episode, folder, force)
     elif visuals == "stills":
         combined = _render_stills(series, episode, folder, force)
+    elif visuals == "comfy":
+        combined = _render_comfy(series, episode, folder, force)
     elif visuals == "drawn":
         combined = _render_drawn(series, episode, folder, force)
     else:
-        raise SeriesError(f"unknown visuals {visuals!r}; use 'drawn', 'stills' or 'realistic'")
+        raise SeriesError(f"unknown visuals {visuals!r}; use 'drawn', 'stills', 'realistic' or 'comfy'")
 
     logger.info("mixing voice, music and subtitles")
-    final = folder / f"{series.slug}-ep{number:02d}{ {'realistic': '-real', 'stills': '-photo'}.get(visuals, '') }.mp4"
+    final = folder / f"{series.slug}-ep{number:02d}{ {'realistic': '-real', 'stills': '-photo', 'comfy': '-comfy'}.get(visuals, '') }.mp4"
     captions = series.bible.get("captions") or {}
     params = VideoParams(
         video_subject=episode.get("title", f"Episode {number}"),
@@ -603,10 +894,11 @@ def main(argv: list[str] | None = None) -> int:
         p = sub.add_parser(name)
         p.add_argument("--episode", type=int, required=True)
         p.add_argument("--force", action="store_true", help="redo this step even if files exist")
-    sub.choices["render"].add_argument("--visuals", choices=["drawn", "stills", "realistic"],
+    sub.choices["render"].add_argument("--visuals", choices=["drawn", "stills", "realistic", "comfy"],
                                        help="override the bible's render.visuals")
+    sub.add_parser("comfy-check", help="check the ComfyUI server and workflows (no GPU time used)")
     nxt = sub.add_parser("next", help="plan and render the next unplanned episode")
-    nxt.add_argument("--visuals", choices=["drawn", "stills", "realistic"])
+    nxt.add_argument("--visuals", choices=["drawn", "stills", "realistic", "comfy"])
     args = parser.parse_args(argv)
 
     series = Series.load(args.series)
@@ -617,6 +909,8 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "portraits":
             for path in ensure_portraits(series, force=args.force).values():
                 print(path)
+        elif args.command == "comfy-check":
+            print(comfy_check(series))
         elif args.command == "plan":
             episode = plan_episode(series, args.episode, force=args.force)
             print(json.dumps(episode, indent=2, ensure_ascii=False))
