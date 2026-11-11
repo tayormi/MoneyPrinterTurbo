@@ -131,6 +131,23 @@ The episode lands in `storage/series/coral-key/ep01/coral-key-ep01-comfy.mp4`.
 cost at your hourly rate. Finished clips are kept, so a rerun only makes the
 shots that are missing; `--force` redoes them all.
 
+### 6b. Compare the shot-list script on one scene
+
+`series/coral-key/episodes/ep01-old-opening.json` is Part 1's opening as three long shots
+(the old way); `ep01-shots.json` scene A is the same lines covered as six short shots.
+Render both and watch them one after the other:
+
+```bash
+uv run python -m app.services.series series/coral-key render --episode 1 --visuals comfy \
+  --file series/coral-key/episodes/ep01-old-opening.json
+uv run python -m app.services.series series/coral-key render --episode 1 --visuals comfy \
+  --file series/coral-key/episodes/ep01-shots.json --only A
+```
+
+Use `first_frames: gemini` (or a `still_workflow`) for this: with `portrait`, every shot
+starts from the same studio portrait, so close-ups, over-the-shoulders and wides all begin
+from one framing and the comparison says little. Nine Gemini first frames cost roughly $0.60.
+
 ### 7. Stop the pod
 
 Stop it in RunPod as soon as the render is done. A stopped pod with a network

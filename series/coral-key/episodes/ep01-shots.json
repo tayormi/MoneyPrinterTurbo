@@ -1,0 +1,641 @@
+{
+  "number": 1,
+  "total": 10,
+  "title": "Washed Ashore",
+  "format": "shot-list",
+  "hook": "Vanessa, soaked and furious, accuses Leo before he has even lifted his face out of the sand.",
+  "cliffhanger": {
+    "type": "reveal",
+    "beat": "The bilge-pump alarm was switched off by hand."
+  },
+  "caption": "Part 1/10. They blamed the mechanic. The mechanic found the switch. #CoralKey #SurvivalDrama #Castaway #MiniSeries",
+  "recap": "The yacht sinks in a storm; Vanessa blames Leo, claims the only tarp and makes herself leader, and Priya's bark rules make Leo the camp's servant. Exiled to the rocky point, Leo salvages the wreck and builds a dry sail shelter while the tarp camp floods. Vanessa orders him to swap; he tells her to ask nicely. That night in the flooded engine room he finds the bilge-pump alarm switched off by hand.",
+  "scenes": [
+    {
+      "id": "A",
+      "location": "beach_waterline",
+      "time": "bright morning after the storm",
+      "light": "low warm sun from frame left, soft fill bouncing off the wet sand",
+      "change": "Leo wakes up already blamed for the sinking.",
+      "blocking": {
+        "vanessa": "on frame left",
+        "leo": "on frame right",
+        "priya": "on frame left",
+        "jade": "on frame right",
+        "mia": "in the centre"
+      },
+      "shots": [
+        {
+          "id": "A1",
+          "size": "close-up",
+          "angle": "low angle, looking up at her",
+          "move": "slow push in",
+          "in_frame": [
+            "vanessa"
+          ],
+          "action": "Vanessa, soaked, white blazer torn, white sunglasses crooked on her head, jabs a finger down toward the sand, shaking with anger.",
+          "eyeline": "Vanessa looks down toward frame right",
+          "line": {
+            "speaker": "vanessa",
+            "delivery": "furious, cracking",
+            "text": "You sank my yacht, Leo! Say it out loud!"
+          },
+          "seconds": 3
+        },
+        {
+          "id": "A2",
+          "size": "medium shot",
+          "angle": "high angle over Vanessa's shoulder, her shoulder soft in the foreground on frame left",
+          "move": "static",
+          "in_frame": [
+            "leo",
+            "vanessa"
+          ],
+          "action": "Leo, face-down in the wet sand, lifts his head, spits out a mouthful of sand and props himself on one elbow, deadpan.",
+          "eyeline": "Leo looks up toward frame left at Vanessa",
+          "line": {
+            "speaker": "leo",
+            "delivery": "dry, hoarse",
+            "text": "I'm alive, thanks for asking. Anyone else?"
+          },
+          "seconds": 3.5
+        },
+        {
+          "id": "A3",
+          "size": "medium close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "priya"
+          ],
+          "action": "Priya wrings sea water out of her ponytail, pushes her round glasses up her nose and raises one eyebrow.",
+          "eyeline": "Priya looks toward frame right, past the camera, at Leo",
+          "line": {
+            "speaker": "priya",
+            "delivery": "clipped, lawyerly",
+            "text": "Let the record show he didn't deny it."
+          },
+          "seconds": 3
+        },
+        {
+          "id": "A4",
+          "size": "close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo, sand on his cheek, closes his eyes for a long beat and exhales through his nose. He says nothing.",
+          "eyeline": "Leo looks toward frame left",
+          "line": null,
+          "seconds": 1.5
+        },
+        {
+          "id": "A5",
+          "size": "wide establishing shot",
+          "angle": "eye level from the shallows",
+          "move": "slow pull back",
+          "in_frame": [
+            "vanessa",
+            "priya",
+            "jade",
+            "mia",
+            "leo"
+          ],
+          "action": "Vanessa climbs onto a washed-up log and raises both arms like a CEO on a stage. The others stand below her on the sand, small against the beach, the yacht tilted on the reef behind them.",
+          "eyeline": "everyone looks up at Vanessa",
+          "line": {
+            "speaker": "vanessa",
+            "delivery": "loud, crisp, commanding",
+            "text": "Nobody panic. I'm in charge now. Obviously."
+          },
+          "seconds": 4
+        },
+        {
+          "id": "A6",
+          "size": "medium shot",
+          "angle": "slightly low angle",
+          "move": "static",
+          "in_frame": [
+            "jade"
+          ],
+          "action": "Jade, in her neon-green sports top, puts her hands on her hips and tilts her head with a mocking grin.",
+          "eyeline": "Jade looks up toward frame left at Vanessa on the log",
+          "line": {
+            "speaker": "jade",
+            "delivery": "teasing, quick",
+            "text": "Since when? Who voted?"
+          },
+          "seconds": 2.5
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "location": "beach_debris",
+      "time": "late morning",
+      "light": "high bright sun from frame left, hard shadows",
+      "change": "Vanessa takes the only shelter and leaves Leo out.",
+      "blocking": {
+        "vanessa": "on frame left",
+        "leo": "on frame right",
+        "mia": "on frame right"
+      },
+      "shots": [
+        {
+          "id": "B1",
+          "size": "insert close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [],
+          "action": "Two hands with gold rings yank a bright blue tarp out of a tangle of splintered deck boards and rope.",
+          "eyeline": "",
+          "line": null,
+          "seconds": 1.5
+        },
+        {
+          "id": "B2",
+          "size": "medium shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "vanessa"
+          ],
+          "action": "Vanessa hugs the folded blue tarp to her chest like a trophy and lifts her chin.",
+          "eyeline": "Vanessa looks toward frame right at the others",
+          "line": {
+            "speaker": "vanessa",
+            "delivery": "smug",
+            "text": "This tarp is mine. Leadership has privileges."
+          },
+          "seconds": 3
+        },
+        {
+          "id": "B3",
+          "size": "medium close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "mia"
+          ],
+          "action": "Mia, hoodie sleeves pulled over her hands, glances at the tarp and then at the others, uneasy.",
+          "eyeline": "Mia looks toward frame left at Vanessa",
+          "line": {
+            "speaker": "mia",
+            "delivery": "soft, hesitant",
+            "text": "There's only one tarp? For five people?"
+          },
+          "seconds": 3
+        },
+        {
+          "id": "B4",
+          "size": "over-the-shoulder shot",
+          "angle": "from behind Vanessa, her shoulder and blonde bob soft on frame left",
+          "move": "static",
+          "in_frame": [
+            "leo",
+            "vanessa"
+          ],
+          "action": "Leo faces the camera on frame right, calm and unimpressed, arms folded.",
+          "eyeline": "Leo looks toward frame left at Vanessa",
+          "line": {
+            "speaker": "leo",
+            "delivery": "calm, flat",
+            "text": "And where am I supposed to sleep?"
+          },
+          "seconds": 2.5
+        },
+        {
+          "id": "B5",
+          "size": "over-the-shoulder shot",
+          "angle": "from behind Leo, his shoulder soft on frame right",
+          "move": "static",
+          "in_frame": [
+            "vanessa",
+            "leo"
+          ],
+          "action": "Vanessa flips her white sunglasses down over her eyes and points far down the beach, off frame left.",
+          "eyeline": "Vanessa looks toward frame right at Leo",
+          "line": {
+            "speaker": "vanessa",
+            "delivery": "cool, dismissive",
+            "text": "Not my department. Try the rocks, mechanic."
+          },
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "location": "palm_camp",
+      "time": "midday",
+      "light": "dappled sun through palm leaves from above",
+      "change": "The camp makes Leo its servant, and Mia quietly breaks ranks.",
+      "blocking": {
+        "priya": "on frame left",
+        "leo": "on frame right",
+        "jade": "on frame left",
+        "mia": "in the centre"
+      },
+      "shots": [
+        {
+          "id": "C1",
+          "size": "medium shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "priya"
+          ],
+          "action": "Priya finishes scratching charcoal marks on the bark strip pinned to the palm, turns and holds the charcoal out toward Leo.",
+          "eyeline": "Priya looks toward frame right at Leo",
+          "line": {
+            "speaker": "priya",
+            "delivery": "brisk, precise",
+            "text": "Rule one: Leo fetches. Everyone else rests. Initial here."
+          },
+          "seconds": 3.5
+        },
+        {
+          "id": "C2",
+          "size": "close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo looks at the bark, then at the charcoal, and gives a tiny tired smile.",
+          "eyeline": "Leo looks toward frame left",
+          "line": {
+            "speaker": "leo",
+            "delivery": "dry, under his breath",
+            "text": "Great. They brought a lawyer."
+          },
+          "seconds": 2.5
+        },
+        {
+          "id": "C3",
+          "size": "medium shot",
+          "angle": "low angle from the sand",
+          "move": "static",
+          "in_frame": [
+            "jade"
+          ],
+          "action": "Jade stretches out on the sand, sweatband on her wrist, grinning up at Leo.",
+          "eyeline": "Jade looks up toward frame right",
+          "line": {
+            "speaker": "jade",
+            "delivery": "mocking, sing-song",
+            "text": "Careful, mechanic. Don't sink the island too."
+          },
+          "seconds": 3
+        },
+        {
+          "id": "C4",
+          "size": "medium close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "mia",
+            "leo"
+          ],
+          "action": "Mia checks over her shoulder that nobody is watching, then presses a green coconut into Leo's hands; only his hands and shoulder are in frame on the right.",
+          "eyeline": "Mia looks toward frame right at Leo, then down",
+          "line": {
+            "speaker": "mia",
+            "delivery": "whisper",
+            "text": "Sorry. Here, take this."
+          },
+          "seconds": 2.5
+        },
+        {
+          "id": "C5",
+          "size": "medium tracking shot",
+          "angle": "eye level, camera walking backwards in front of him",
+          "move": "tracking backwards with him",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo walks toward the camera along the beach, coconut under one arm, the palms and the women small behind him.",
+          "eyeline": "Leo looks ahead, just past the camera",
+          "line": {
+            "speaker": "leo",
+            "delivery": "quiet, determined",
+            "text": "Fine. I'll build my own."
+          },
+          "seconds": 3
+        },
+        {
+          "id": "C6",
+          "size": "wide shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "jade"
+          ],
+          "action": "Jade cups her hands around her mouth and shouts down the beach after him.",
+          "eyeline": "Jade looks toward frame left, far away",
+          "line": {
+            "speaker": "jade",
+            "delivery": "shouting, laughing",
+            "text": "Goodnight, Rocky!"
+          },
+          "seconds": 2
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "location": "wreck_deck",
+      "time": "afternoon, low tide",
+      "light": "warm afternoon sun from frame right, sparkling water",
+      "change": "Leo turns the wreck into a better shelter than the tarp.",
+      "blocking": {
+        "leo": "in the centre"
+      },
+      "shots": [
+        {
+          "id": "D1",
+          "size": "wide shot",
+          "angle": "eye level from the reef",
+          "move": "slow pan following him",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo wades knee-deep through clear teal water toward the tilted white yacht on the reef.",
+          "eyeline": "Leo looks at the wreck ahead",
+          "line": null,
+          "seconds": 2.5
+        },
+        {
+          "id": "D2",
+          "size": "medium shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "On the tilted deck Leo pats the broken boom and grins to himself.",
+          "eyeline": "Leo looks down at the boom",
+          "line": {
+            "speaker": "leo",
+            "delivery": "amused, to himself",
+            "text": "A wreck is just a warehouse that floats badly."
+          },
+          "seconds": 3
+        },
+        {
+          "id": "D3",
+          "size": "insert close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [],
+          "action": "A hand with an orange multitool unscrews a rusted bolt on the boom; it drops into the water.",
+          "eyeline": "",
+          "line": null,
+          "seconds": 1.5
+        },
+        {
+          "id": "D4",
+          "size": "medium shot",
+          "angle": "slightly low angle",
+          "move": "slow push in",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "On the windy rocky point Leo pulls a rope knot tight on an A-frame made from the boom, the white sail snapping in the wind.",
+          "eyeline": "Leo looks at the knot in his hands",
+          "line": {
+            "speaker": "leo",
+            "delivery": "focused",
+            "text": "Boom for the frame. Sail for the roof."
+          },
+          "seconds": 3
+        },
+        {
+          "id": "D5",
+          "size": "wide shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "The finished sail shelter stands taut on the rocks; Leo slaps the frame twice and it doesn't move.",
+          "eyeline": "Leo looks at the shelter",
+          "line": {
+            "speaker": "leo",
+            "delivery": "satisfied",
+            "text": "Lashings. Done."
+          },
+          "seconds": 2
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "location": "tarp_camp",
+      "time": "dusk, rain starting",
+      "light": "blue dusk light, warm lantern glow far away on frame right",
+      "change": "The tarp camp floods and has to look at Leo's dry shelter.",
+      "blocking": {
+        "vanessa": "on frame left",
+        "jade": "on frame right",
+        "priya": "on frame left",
+        "mia": "on frame right"
+      },
+      "shots": [
+        {
+          "id": "E1",
+          "size": "medium two-shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "vanessa",
+            "jade"
+          ],
+          "action": "The blue tarp sags, then collapses; a sheet of rain water pours onto Jade's face.",
+          "eyeline": "Jade looks up at the tarp",
+          "line": {
+            "speaker": "jade",
+            "delivery": "outraged",
+            "text": "Why is my face wet?!"
+          },
+          "seconds": 2.5
+        },
+        {
+          "id": "E2",
+          "size": "close-up",
+          "angle": "eye level",
+          "move": "handheld, slightly shaky",
+          "in_frame": [
+            "vanessa"
+          ],
+          "action": "Vanessa, hair plastered to her face, water dripping off her nose, tries to stay composed.",
+          "eyeline": "Vanessa looks toward frame right",
+          "line": {
+            "speaker": "vanessa",
+            "delivery": "high-pitched, panicking",
+            "text": "Nobody panic! I said nobody panic!"
+          },
+          "seconds": 2.5
+        },
+        {
+          "id": "E3",
+          "size": "medium two-shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "priya",
+            "mia"
+          ],
+          "action": "Priya and Mia stand in the drizzle, staring down the beach at a warm glowing shelter on the rocks.",
+          "eyeline": "both look toward frame right, far away",
+          "line": {
+            "speaker": "priya",
+            "delivery": "flat, defeated",
+            "text": "Section four says shelter must be dry. Whose is dry?"
+          },
+          "seconds": 3
+        },
+        {
+          "id": "E4",
+          "size": "close-up",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "mia"
+          ],
+          "action": "Mia, rain on her cheeks, gives a small hidden smile.",
+          "eyeline": "Mia looks toward frame right, far away",
+          "line": {
+            "speaker": "mia",
+            "delivery": "quiet",
+            "text": "His."
+          },
+          "seconds": 1.5
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "location": "leo_shelter",
+      "time": "dusk, light rain",
+      "light": "warm lantern light inside the shelter, cold blue rain outside",
+      "change": "Vanessa demands the shelter; Leo doesn't budge.",
+      "blocking": {
+        "vanessa": "on frame left",
+        "leo": "on frame right"
+      },
+      "shots": [
+        {
+          "id": "F1",
+          "size": "medium two-shot",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [
+            "vanessa",
+            "leo"
+          ],
+          "action": "Vanessa, dripping and rigid, points at the dry floor inside the shelter.",
+          "eyeline": "Vanessa looks down toward frame right at Leo",
+          "line": {
+            "speaker": "vanessa",
+            "delivery": "stiff, commanding",
+            "text": "Swap shelters. That's an order."
+          },
+          "seconds": 2.5
+        },
+        {
+          "id": "F2",
+          "size": "close-up",
+          "angle": "slightly low angle",
+          "move": "static",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo, dry and relaxed, doesn't move; lantern light on his face.",
+          "eyeline": "Leo looks up toward frame left at Vanessa",
+          "line": {
+            "speaker": "leo",
+            "delivery": "calm, almost kind",
+            "text": "Ask nicely. Then we'll talk."
+          },
+          "seconds": 2.5
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "location": "engine_room",
+      "time": "night",
+      "light": "darkness, only Leo's flashlight beam",
+      "change": "Leo finds out the sinking wasn't his fault.",
+      "blocking": {
+        "leo": "in the centre"
+      },
+      "shots": [
+        {
+          "id": "G1",
+          "size": "medium shot",
+          "angle": "eye level",
+          "move": "slow handheld follow",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo wades through shin-deep black water, his flashlight beam sweeping across the rusted engine and stopping on the alarm panel.",
+          "eyeline": "Leo looks at the panel on frame left",
+          "line": {
+            "speaker": "leo",
+            "delivery": "low, puzzled",
+            "text": "Alarm panel's still wired. Why didn't it scream?"
+          },
+          "seconds": 3.5
+        },
+        {
+          "id": "G2",
+          "size": "extreme close-up insert",
+          "angle": "eye level",
+          "move": "static",
+          "in_frame": [],
+          "action": "A bilge-pump alarm toggle switch set to OFF, wires intact; a thumb brushes it in the flashlight beam.",
+          "eyeline": "",
+          "line": null,
+          "seconds": 2
+        },
+        {
+          "id": "G3",
+          "size": "close-up",
+          "angle": "eye level",
+          "move": "slow push in",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo's face in the flashlight glow, his expression shifting from confusion to cold realisation.",
+          "eyeline": "Leo looks down at the switch",
+          "line": {
+            "speaker": "leo",
+            "delivery": "quiet, stunned",
+            "text": "The alarm didn't fail. Someone switched it off."
+          },
+          "seconds": 3.5
+        },
+        {
+          "id": "G4",
+          "size": "extreme close-up",
+          "angle": "eye level",
+          "move": "fast push in, then hard cut to black",
+          "in_frame": [
+            "leo"
+          ],
+          "action": "Leo's eyes lift from the switch and stare into the dark.",
+          "eyeline": "Leo looks toward frame left into the dark",
+          "line": {
+            "speaker": "leo",
+            "delivery": "barely a whisper",
+            "text": "By hand."
+          },
+          "seconds": 2
+        }
+      ]
+    }
+  ]
+}

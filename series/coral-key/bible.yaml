@@ -109,6 +109,18 @@ setting:
   island: "Coral Key: a small crescent island with a white beach, palm grove, a rocky hill with a cave, a freshwater stream inland, and the half-sunk yacht wreck on the reef."
   camp: "The women's camp is on the beach under a tarp from the wreck. Leo is pushed to the windy rocky point at the far end."
 
+# Recurring places for shot-list episodes (scene.location). One fixed description each, so every
+# angle of a scene is told the same place in the same words.
+locations:
+  beach_waterline: "the wet white-sand waterline of Coral Key's crescent beach, scattered storm debris, teal sea behind, the half-sunk white charter yacht tilted on the reef offshore"
+  beach_debris: "a pile of storm wreckage on the white beach: splintered teak deck boards, coiled ropes, a cracked cooler, a bright blue tarp tangled in it, palms behind"
+  palm_camp: "a cluster of leaning coconut palms at the top of the beach, soft sand, a strip of pale bark pinned to the nearest trunk"
+  rocky_point: "the windy, jagged grey rocky point at the far end of the beach, a lone bent palm, surf breaking below"
+  wreck_deck: "the tilted, waterlogged deck of the sunk white charter yacht, knee-deep teal water over the lower rail, a broken boom and a torn white sail"
+  tarp_camp: "the women's camp under a sagging blue tarp strung between two palms on the beach"
+  leo_shelter: "Leo's A-frame shelter on the rocky point: a yacht boom ridge pole, a taut white sail roof, lashed rope, a dry floor of palm fronds, a small lantern inside"
+  engine_room: "the yacht's flooded engine room below deck, black water up to the shins, rusted engine, a wall-mounted bilge-pump alarm panel with toggle switches"
+
 season_mystery: >
   Why did the yacht sink? Vanessa tells everyone the mechanic (Leo) ignored a leak, which
   is why the group treats him like a liability. Clues: a silenced bilge-pump alarm, Vanessa's

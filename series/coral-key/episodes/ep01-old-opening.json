@@ -1,0 +1,62 @@
+{
+  "number": 1,
+  "total": 10,
+  "title": "Washed Ashore (old format, opening only)",
+  "scenes": [
+    {
+      "id": "s1",
+      "shot": "Close-up, bright morning on the white beach. Vanessa, soaked, blazer torn, white sunglasses crooked on her head, points down furiously at Leo lying in the sand. Priya and Jade stand behind her.",
+      "characters": [
+        "vanessa",
+        "leo",
+        "priya",
+        "jade"
+      ],
+      "lines": [
+        {
+          "speaker": "vanessa",
+          "text": "You sank my yacht, Leo! Say it out loud!"
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "shot": "Medium shot. Leo lies face-down in the sand, lifts his head and spits out a mouthful of sand, deadpan. Behind him Priya wrings out her ponytail and pushes up her glasses.",
+      "characters": [
+        "leo",
+        "priya"
+      ],
+      "lines": [
+        {
+          "speaker": "leo",
+          "text": "I'm alive, thanks for asking. Anyone else?"
+        },
+        {
+          "speaker": "priya",
+          "text": "Let the record show he didn't deny it."
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "shot": "Wide shot of the crescent beach. The half-sunk yacht tilts on the reef in the background. Vanessa stands on a washed-up log with her arms raised; Jade, Priya, Mia and Leo stand below her on the sand.",
+      "characters": [
+        "vanessa",
+        "jade",
+        "priya",
+        "mia",
+        "leo"
+      ],
+      "lines": [
+        {
+          "speaker": "vanessa",
+          "text": "Nobody panic. I'm in charge now. Obviously."
+        },
+        {
+          "speaker": "jade",
+          "text": "Since when? Who voted?"
+        }
+      ]
+    }
+  ]
+}

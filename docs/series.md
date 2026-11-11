@@ -44,6 +44,44 @@ uv run python -m app.services.series series/coral-key render --episode 1 --visua
 - Voices come from Kokoro and subtitles are timed to the real audio, so they are exact.
 - Shots alternate zoom in, zoom out, pan left and pan right to keep the pace up.
 
+## Shot-list episodes (scenes covered like a film)
+
+An episode can also be written the way film crews cover a scene: `scenes` that each hold
+short `shots`. The scene fixes what must not change between cuts (place, time, light and who
+stands on which side of the frame); each shot has one framing, one action, one eyeline and at
+most one spoken line. Video models remember nothing between shots, so the fork repeats the
+scene's wording in every shot's prompt, which keeps faces, sides and light matching across cuts.
+
+```json
+{"id": "A", "location": "beach_waterline", "time": "bright morning",
+ "light": "low warm sun from frame left",
+ "blocking": {"vanessa": "on frame left", "leo": "on frame right"},
+ "shots": [
+   {"id": "A1", "size": "close-up", "angle": "low angle", "move": "slow push in",
+    "in_frame": ["vanessa"], "action": "Vanessa jabs a finger down toward the sand.",
+    "eyeline": "Vanessa looks down toward frame right",
+    "line": {"speaker": "vanessa", "delivery": "furious", "text": "You sank my yacht, Leo!"},
+    "seconds": 3},
+   {"id": "A2", "size": "close-up", "in_frame": ["leo"], "action": "Leo exhales, says nothing.",
+    "eyeline": "Leo looks toward frame left", "line": null, "seconds": 1.5}
+ ]}
+```
+
+- `location` is a key from the bible's `locations`, so every angle gets the same description.
+- Silent shots (`"line": null`) are reactions and inserts: they cost no lip-sync and give the
+  edit something to cut to. Their `seconds` is kept as planned.
+- The full Part 1 in this form is `series/coral-key/episodes/ep01-shots.json` (32 shots).
+
+Render a script file without touching the planned episode, and only some scenes or shots:
+
+```bash
+uv run python -m app.services.series series/coral-key render --episode 1 \
+  --file series/coral-key/episodes/ep01-shots.json --only A --visuals comfy
+```
+
+Output goes to `storage/series/coral-key/ep01-shots/only-A/`. `--only` also takes shot ids
+(`--only A1,A2`) and works on old-format episodes (`--only s1,s2`).
+
 ## Pacing, title card and captions
 
 The bible's `format` block sets the pace: shots per episode, seconds per shot, words per line,

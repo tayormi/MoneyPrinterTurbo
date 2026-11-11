@@ -16,6 +16,7 @@ running (``./claude-local.sh --local-voice`` starts it).
 
 import argparse
 import json
+import math
 import re
 import subprocess
 import sys
@@ -188,9 +189,9 @@ def plan_episode(series: Series, number: int, force: bool = False) -> dict:
             prev = json.loads(prev_file.read_text(encoding="utf-8"))
             recaps.append(f"Part {previous} \"{prev.get('title')}\": {prev.get('recap')}")
             if previous == number - 1 and prev.get("scenes"):
-                last = prev["scenes"][-1]
-                last_cliffhanger = f"{last.get('shot', '')} " + " ".join(
-                    f"{l['speaker']}: {l['text']}" for l in last.get("lines", []))
+                from app.services.series_shots import last_beat
+
+                last_cliffhanger = last_beat(prev)
     arc = series.bible.get("season_arc") or []
     arc_beat = arc[number - 1] if 0 < number <= len(arc) else "Continue the story naturally from the recaps."
     fmt = series.bible.get("format", {})
@@ -323,6 +324,11 @@ def _voice_lines(series: Series, episode: dict, folder: Path, force: bool) -> li
             gap = LINE_GAP_MS if l_index < len(scene["lines"]) - 1 else SCENE_GAP_MS
             audio += AudioSegment.silent(duration=gap)
             cursor += gap
+        planned_ms = int(float(scene.get("seconds") or 0) * 1000)
+        if cursor - scene_start < planned_ms:  # silent shots and short lines keep their planned length
+            pad = planned_ms - (cursor - scene_start)
+            audio += AudioSegment.silent(duration=pad)
+            cursor += pad
         scene["_start_ms"], scene["_end_ms"] = scene_start, cursor
     audio.export(folder / "voice.mp3", format="mp3", bitrate="192k")
     return timeline
@@ -591,15 +597,16 @@ def comfy_shot_prompt(bible: dict, scene: dict, spoken: bool) -> str:
     people = [f"{chars[cid]['name']} ({chars[cid].get('look', '')})" for cid in scene.get("characters", [])]
     parts = [
         "Photorealistic live-action shot from a vertical TV drama. One continuous take, natural light, "
-        "handheld cinema camera, real skin texture. No on-screen text, no subtitles, no music.",
-        f"Setting: {_setting_text(bible)}",
+        "cinema camera, real skin texture. No on-screen text, no subtitles, no music.",
+        "" if scene.get("scene") else f"Setting: {_setting_text(bible)}",  # shot-list shots name their location
         f"People in frame: {'; '.join(people)}." if people else "",
         f"Action: {scene['shot']}",
     ]
     if spoken and scene.get("lines"):
         for line in scene["lines"]:
             c = chars[line["speaker"]]
-            parts.append(f"{c['name']} says in a {c.get('voice_style', 'natural')} voice: \"{line['text']}\"")
+            how = f"; {line['delivery']}" if line.get("delivery") else ""
+            parts.append(f"{c['name']} speaks ({c.get('voice_style', 'natural voice')}{how}): \"{line['text']}\"")
         parts.append("Lips move in sync with the words. Quiet natural ambience of the location underneath.")
     elif scene.get("lines"):
         speakers = ", ".join(dict.fromkeys(chars[l["speaker"]]["name"] for l in scene["lines"]))
@@ -718,6 +725,10 @@ def _render_comfy(series: Series, episode: dict, folder: Path, force: bool) -> P
             return out
         if audio_mode == "kokoro":
             seconds = max(2, min(max_seconds, -(-(scene["_end_ms"] - scene["_start_ms"]) // 1000)))
+        elif scene.get("seconds"):  # shot-list episodes: planned length, stretched if the line needs it
+            words = sum(len(l["text"].split()) for l in scene.get("lines", []))
+            needed = words / 3.0 + 0.6 if words else 0  # brisk drama delivery, a little air at the end
+            seconds = max(2, min(max_seconds, math.ceil(max(scene["seconds"], needed))))
         else:
             seconds = min(max_seconds, real.clip_seconds(scene, (3, max_seconds)))
         last = None
@@ -827,12 +838,32 @@ def _render_stills(series: Series, episode: dict, folder: Path, force: bool) -> 
 
 
 def render_episode(series: Series, number: int, force: bool = False, bgm_volume: float = 0.12,
-                   visuals: str | None = None) -> Path:
+                   visuals: str | None = None, episode_file: str | None = None,
+                   only: list[str] | None = None) -> Path:
+    """Render a planned episode. ``episode_file`` renders another script for this episode number
+    into its own folder (ep01-<file name>), so a test never overwrites the planned episode.
+    ``only`` renders just the named scenes or shots, e.g. ["A"] or ["A1", "A2"]."""
+    from app.services import series_shots
+
     folder = series.episode_dir(number)
     ep_file = folder / "episode.json"
+    if episode_file:
+        ep_file = _comfy_path(series, episode_file)
+        if not ep_file.exists():
+            raise SeriesError(f"no episode file at {episode_file}")
+        stem = ep_file.stem if ep_file.stem.startswith(f"ep{number:02d}") else f"ep{number:02d}-{ep_file.stem}"
+        folder = series.out / stem
+        folder.mkdir(parents=True, exist_ok=True)
     if not ep_file.exists():
         raise SeriesError(f"episode {number} is not planned yet; run `plan --episode {number}` first")
     episode = json.loads(ep_file.read_text(encoding="utf-8"))
+    try:
+        episode = series_shots.flatten(series.bible, series_shots.select(episode, only))
+    except ValueError as exc:
+        raise SeriesError(str(exc)) from exc
+    if only:
+        folder = folder / f"only-{'-'.join(only)}"
+        folder.mkdir(parents=True, exist_ok=True)
     for sub in ("scenes", "audio", "clips"):
         (folder / sub).mkdir(exist_ok=True)
 
@@ -849,7 +880,9 @@ def render_episode(series: Series, number: int, force: bool = False, bgm_volume:
         raise SeriesError(f"unknown visuals {visuals!r}; use 'drawn', 'stills', 'realistic' or 'comfy'")
 
     logger.info("mixing voice, music and subtitles")
-    final = folder / f"{series.slug}-ep{number:02d}{ {'realistic': '-real', 'stills': '-photo', 'comfy': '-comfy'}.get(visuals, '') }.mp4"
+    name = folder.name if not only else folder.parent.name
+    tag = (f"-{'-'.join(only)}" if only else "")
+    final = folder / f"{series.slug}-{name}{tag}{ {'realistic': '-real', 'stills': '-photo', 'comfy': '-comfy'}.get(visuals, '') }.mp4"
     captions = series.bible.get("captions") or {}
     params = VideoParams(
         video_subject=episode.get("title", f"Episode {number}"),
@@ -896,6 +929,9 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--force", action="store_true", help="redo this step even if files exist")
     sub.choices["render"].add_argument("--visuals", choices=["drawn", "stills", "realistic", "comfy"],
                                        help="override the bible's render.visuals")
+    sub.choices["render"].add_argument("--file", help="render this episode JSON instead of the planned one "
+                                       "(output goes to its own folder)")
+    sub.choices["render"].add_argument("--only", help="comma-separated scene or shot ids to render, e.g. A or A1,A2")
     sub.add_parser("comfy-check", help="check the ComfyUI server and workflows (no GPU time used)")
     nxt = sub.add_parser("next", help="plan and render the next unplanned episode")
     nxt.add_argument("--visuals", choices=["drawn", "stills", "realistic", "comfy"])
@@ -915,7 +951,9 @@ def main(argv: list[str] | None = None) -> int:
             episode = plan_episode(series, args.episode, force=args.force)
             print(json.dumps(episode, indent=2, ensure_ascii=False))
         elif args.command == "render":
-            print(render_episode(series, args.episode, force=args.force, visuals=args.visuals))
+            only = [o for o in (args.only or "").split(",") if o.strip()] or None
+            print(render_episode(series, args.episode, force=args.force, visuals=args.visuals,
+                                 episode_file=args.file, only=only))
         elif args.command == "next":
             planned = series.planned_episodes()
             number = (planned[-1] + 1) if planned else 1
